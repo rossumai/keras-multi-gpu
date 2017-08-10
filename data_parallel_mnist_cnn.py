@@ -4,9 +4,8 @@ from keras.datasets import mnist
 from keras.models import Model
 from keras.layers import Dense, Dropout, Flatten, Conv2D, Input
 import os
-import tensorflow as tf
 
-from data_parallel import DataParallelModel, DataParallelOptimizer
+from data_parallel_model import DataParallelModel
 
 def load_data():
     # input image dimensions
