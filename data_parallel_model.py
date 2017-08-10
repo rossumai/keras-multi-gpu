@@ -126,6 +126,11 @@ class DataParallelModel(Model):
         loss - identifier or instance of a loss function
         """
 
+        # Avoid storing optimizer variables in multiple replicas.
+        # Let's initialize it now on the PS device.
+        with tf.device("gpu:0"):
+            optimizer = keras.optimizers.get(optimizer)
+
         replica_total_losses = []
         # place the loss and gradient operations for replica on a separate device
         for gpu_id, replica in enumerate(self.replicas):
