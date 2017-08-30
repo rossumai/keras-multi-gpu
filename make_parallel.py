@@ -12,7 +12,7 @@
 #     model = make_parallel(basic_model(), gpu_count, ps_device)
 #     model.compile(loss='categorical_crossentropy', optimizer='sgd')
 
-from keras.layers.merge concatenate
+from keras.layers.merge import concatenate
 from keras.layers import Lambda
 from keras.models import Model
 import tensorflow as tf
