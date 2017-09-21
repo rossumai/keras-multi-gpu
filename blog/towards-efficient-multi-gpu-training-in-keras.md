@@ -21,7 +21,7 @@ There are two principial ways how to parallelize traning of deep learning models
 - *data parallelism* - parts of data mini-batch are distributed over GPUs and trained on the same model
 - *model parallelism* - parts of the model are distributed over GPUs and trained on the same mini-batch of data
 
-Nice overview is an a series of articles by Tim Dettmers: [Data Parallelism](http://timdettmers.com/2014/10/09/deep-learning-data-parallelism/), [Model Parallelism](http://timdettmers.com/2014/11/09/model-parallelism-deep-learning/). It's recommended to use data-parallelism for convolutional and recurrent networks with a lot of computation and not too much parameters, while model parallelism for networks with too many parameters that would not fit within a single GPU memory (eg. layers of LSTM in GNMT).
+Nice overview is an a series of articles by Tim Dettmers: [Data Parallelism](http://timdettmers.com/2014/10/09/deep-learning-data-parallelism/), [Model Parallelism](http://timdettmers.com/2014/11/09/model-parallelism-deep-learning/). It's recommended to use data parallelism for convolutional and recurrent networks with a lot of computation and not too much parameters, while model parallelism for networks with too many parameters that would not fit within a single GPU memory (eg. layers of LSTM in GNMT).
 
 #### Limiting the scope
 
@@ -67,6 +67,20 @@ We might try to reduce the communication.
 
 K. Chen and Q. Huo, "Scalable training of deep learning machines by incremental block training with intra-block parallel optimization and blockwise model-update filtering," in Proceedings of ICASSP, 2016.
 
+## Hardware
+
+- connection of GPUs to CPU
+  - PCIe
+  - at best 16x lane,
+  - multiple GPUs
+- interconnection of GPUs
+  - PCIe
+    - on commodity hardware
+  - NVLink
+    - GPUs connected in a hyper-cube topology
+    - on high-end hardware such as NVIDIA DGX-1
+    - higher performance
+
 ## Implementations
 
 ### Pure TensorFlow
@@ -78,41 +92,90 @@ https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/t
 
 #### How it works?
 
-- device placement using `with tf.device(...)`
-- CUDA_VISIBLE_DEVICES
+TensorFlow allows to place operation (nodes of the computational graph) to be placed on differnet available devices, either automatically or manually.
+
+[TensorFlow tutorial: Using GPUs - Manual device placement](https://www.tensorflow.org/tutorials/using_gpu#manual_device_placement)
+
+Devices are named `/cpu:0` (CPU), `/gpu:0`, `/gpu:1`, ... (visible GPUs).
+
+##### Device placement
+
+Placing operation on devices is done using device scopes that are implemented in Python as context managers.
+
+You can explicitly place an operation on device `/gpu:1` like this:
+
+```
+with tf.device("/gpu:1"):
+  # ... some tf operation ...
+```
+
+In order to check it works well it's possible to [log device placement](https://www.tensorflow.org/tutorials/using_gpu#logging_device_placement) or check the graph in TensorBoard.
+
+##### Device visibility
+
+In case the machine has multiple devices it's possible to restrict devices visible to a process by setting environment variable `CUDA_VISIBLE_DEVICES` with the list of device numbers. You can either provide it in bash or in Python.
+
+```
+$ CUDA_VISIBLE_DEVICES=0,1,4,5 python train.py
+```
+
+The devices in this order are then mapped in TF to `/gpu:0`, ...
 
 #### Where to put parameters?
 
-- CPU
-- one of GPUs
+CPU, one of GPUs or all GPUs?
+
+There are two main options where to place the network parameters. In most tutorials people recommend to put them on CPU. The reason is that there's only communication between CPU and GPU. Also the memory allocation on GPUs should be then symmetric.
+
+When the weights are places on GPU and then distributed to other GPUs in the worst case the communication may go through the CPU (ie. GPU->CPU + CPU->GPU). On the other hand in practice I saw peer-to-peer memcpy operations, ie. data is transferred between GPUs directly through the PCIe bus.
+
+I'd recommend to try both options and measure what's better.
+
+Besides this 'parameter server' mode also possible to 'replicate' variables to all GPUs:
+
+https://www.tensorflow.org/performance/performance_models#variable_distribution_and_gradient_aggregation
 
 ### Keras + TensorFlow
 
 Let's break the backend transparency and use TF operations explicitly.
 
-- fcholet:
-  - https://blog.keras.io/keras-as-a-simplified-interface-to-tensorflow-tutorial.html#multi-gpu-and-distributed-training
-  - just a sketch
-- https://github.com/kuza55/keras-extras
-  - https://medium.com/@kuza55/transparent-multi-gpu-training-on-tensorflow-with-keras-8b0016fd9012
-  - still uses `feed_dict`
-- https://github.com/avolkov1/keras_experiments
-  - claims to support TF queues and even NCCL
-
-How to combine?
+#### How to combine Keras and TensorFlow?
 
 - Keras for both creating model and training with all the bells and whistles (callbacks, etc.)
 - Keras only for creating model, pure TF for training
 - vanilla Keras `Optimizer` only supports one loss
   - need to modify to perform gradient averaging
 
+#### Existing attempts
+
+- fcholet (Keras author):
+  - introducing TensorFlow backend - [Keras as a simplified interface to TensorFlow: tutorial](https://blog.keras.io/keras-as-a-simplified-interface-to-tensorflow-tutorial.html#multi-gpu-and-distributed-training)
+  - just a code sketch of indended use in model parallelism and data parallelism
+- keras/issues:
+  - [Does Keras support using multiple GPUs? #2436](https://github.com/fchollet/keras/issues/2436)
+  - [Data parallelism with multiple GPUs with fit_generator #7698](https://github.com/fchollet/keras/issues/7698)
+  - [[WIP] Correct data-parallel SGD implementation in Keras #7515](https://github.com/fchollet/keras/issues/7515)
+- https://github.com/kuza55/keras-extras
+  - blog: [Transparent Multi-GPU Training on TensorFlow with Keras
+](https://medium.com/@kuza55/transparent-multi-gpu-training-on-tensorflow-with-keras-8b0016fd9012)
+  - distilled from the forums snippets
+  - still uses `feed_dict`
+  - some users claim to see speedup
+  - not packaged yet
+- https://github.com/avolkov1/keras_experiments
+  - claims to support TF queues and even NCCL!
+  - users report it scales well
+  - quite rough prototype, no python package yet
+  - so far the best starting ground
+
 ### Keras + MXNet
 
-- https://devblogs.nvidia.com/parallelforall/scaling-keras-training-multiple-gpus/
-- https://medium.com/@julsimon/apache-mxnet-support-in-keras-83de7dec46e5
+While MXNet backed appeared in Keras in May 2017, multi-GPU support of Keras over MXNet appeared recently: [https://devblogs.nvidia.com/parallelforall/scaling-keras-training-multiple-gpus/](Scaling Keras Model Training to Multiple GPUs) in NVIDIA blog (2017-08-16).
 
-- CIFAR 10
+- dataset: ImageNet (250 GB), model: ResNet-50
+  - should be enough to benefit from multi-GPU training
 - they use queues, multi-GPU and preprocessing from MXNet
+- (+) details are hidden behind quite nice API
 - (+) they show very good scaling
   - on high end hardware - NVIDIA-DGX1 with 4x P100 and NVLink
   - what about cloud instances or commodity hardware?
@@ -120,18 +183,27 @@ How to combine?
 
 ### CNTK
 
+Pure CNTK claims to support multi-GPU training, including algorithms to reduce communication overhead like 1-bit SGD.
+
 - https://docs.microsoft.com/en-us/cognitive-toolkit/Multiple-GPUs-and-machines
 - https://docs.microsoft.com/en-us/cognitive-toolkit/Enabling-1bit-SGD
 
 #### Keras + CNTK
 
 - https://docs.microsoft.com/en-us/cognitive-toolkit/Using-CNTK-with-Keras
-- integration with Keras is not complete
-- no multi-GPU support yet for this combination
+- [integration with Keras is not complete](https://docs.microsoft.com/en-us/cognitive-toolkit/Using-CNTK-with-Keras#known-issues)
+- [multi-GPU support appeared just recently](https://docs.microsoft.com/en-us/cognitive-toolkit/Using-CNTK-MultiGPU-Support-with-Keras) (2017-09-15)
+  - it explicitly uses CNTK facilities for setup, but then Keras's `Model.fit()`
+  - some code examples available but not a complete script
+- (-) cannot be used when our project already depend on TensorFlow
+
+TODO: run, measure, review
 
 ### PyTorch
 
 http://pytorch.org/tutorials/beginner/former_torchies/parallelism_tutorial.html
+
+TODO: run, measure, review
 
 ## Measurements & results
 
@@ -162,7 +234,7 @@ https://github.com/avolkov1/keras_experiments
 
 The first problem is that training with vanilla Keras/TensorFlow is not efficient even on a single GPU. Due to providing data via `feed_dict` there's no overlap between memcpy/compute operations and the GPU cannot be fully utilized for computation.
 
-This could be solved by prefetching data asynchronously via TF queues. At the moment computation of a batch begins the data is already there. It may significantly improve performance on a single GPU.
+This could be solved by prefetching data asynchronously via TF queues. At the moment computation of a batch begins the data is already there. It may significantly improve performance on a single GPU. There's a [basic queue API](https://www.tensorflow.org/api_guides/python/reading_data#Reading_from_files) for and a currently recommended [Dataset API](https://www.tensorflow.org/programmers_guide/datasets).
 
 With this done the approach of `kuza55/make_parallel` might be viable as it is.
 
@@ -174,17 +246,25 @@ The rest of changes may further improve performance but probably are not vital.
 
 So far `kuza55/make_parallel` just computes predictions
 
-- does proper gradient averaging instead of
+- does proper gradient averaging instead of concatenating the outputs
 
 ### Optimized communication with NCCL operations
 
-- reduce/transfer gradients and broadcast weights via NCCL operations
+Possible to reduce/transfer gradients and broadcast weights via NCCL operations.
+
+TensorFlow already supports that in [tf.contrib.nccl](https://www.tensorflow.org/api_docs/python/tf/contrib/nccl).
+
+In the TensorFlow [High-Performance Models] tutorial they advise that NCCL may help with 8 or more GPUs, however for less GPU the plain implicit copy performs better.
+
+So it's an option for performance improvement at the cost of higher complexity and it has to be measure if it helps in a particular case or not.
 
 ### Quantized gradients
 
 A limiting factor is exchanging gradients and weights between GPUs or with CPU.
 
 - try to reduce amount of transfered data by 1-bit SGD
+
+Nice to have. Doesn't seem to be implemented in Keras/TF so far.
 
 ### Better learning rates for bigger batch sizes
 
@@ -196,5 +276,8 @@ A limiting factor is exchanging gradients and weights between GPUs or with CPU.
 
 - multi-GPU only for training
 - we need to be able to save/load the weights
+- nice API
 
 ## Conclusion
+
+TODO
