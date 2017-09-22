@@ -2,7 +2,11 @@
 
 In this article I'd like to summarize the current state of attempts for data-parallel multi-GPU training in Keras over TensorFlow and a roadmap of steps to make it efficient and usable in practice.
 
-We will cover two problems: efficiently training on a single GPU and then extending training to multiple GPUs on the same machine.
+We will cover two problems: efficiently training on a single GPU and extending training to multiple GPUs on the same machine.
+
+We started our experiments in July 2017 and in the meanwhile there appeared some open-source experiments that seem to solve the scaling problem, either on different backend (MXNet, CNTK) or even using TensorFlow.
+
+So let's try to dive in the problem, see the landscape of of solutions and review a bunch of measurements in practice to see what's working and what doesn't.
 
 ## Introduction
 
@@ -80,6 +84,95 @@ K. Chen and Q. Huo, "Scalable training of deep learning machines by incremental 
     - GPUs connected in a hyper-cube topology
     - on high-end hardware such as NVIDIA DGX-1
     - higher performance
+
+[List of common GPUs for deep learning and their parameters](https://docs.google.com/spreadsheets/d/1pQNWTLfsBmclB3lojc5DHPZCRoKATjNqDA1Sbwq4zeE/edit#gid=0).
+
+### Comparison of a custom 7-GPU machine with cloud instances
+
+- 7-GPU - 6x 1070 + 1x 1080
+  - too many devices share limited number of PCIe lanes
+  - too slow host-device connection even for one device
+  - in practice doesn't work well for multi-GPU training
+- Azure Standard_NV12 (2x Tesla M60)
+  - seems to work well
+- Azure Standard_NV24 (4x Tesla M60) - TOOD
+- HW with NVLink (like NVIDIA DGX-1) would be much better
+  - we don't have access to any -> can't measure
+
+### Topology
+
+Tip from https://github.com/BVLC/caffe/blob/master/docs/multigpu.md
+
+```
+$ nvidia-smi topo -m
+```
+
+```
+Legend:
+
+  X   = Self
+  SOC  = Connection traversing PCIe as well as the SMP link between CPU sockets(e.g. QPI)
+  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)
+  PXB  = Connection traversing multiple PCIe switches (without traversing the PCIe Host Bridge)
+  PIX  = Connection traversing a single PCIe switch
+  NV#  = Connection traversing a bonded set of # NVLinks
+```
+
+7gpu - two groups (within group just PCIe switch, between via CPU):
+```
+        GPU0    GPU1    GPU2    GPU3    GPU4    GPU5    GPU6    CPU Affinity
+GPU0     X      PIX     PIX     PHB     PHB     PHB     PHB     0-19
+GPU1    PIX      X      PIX     PHB     PHB     PHB     PHB     0-19
+GPU2    PIX     PIX      X      PHB     PHB     PHB     PHB     0-19
+GPU3    PHB     PHB     PHB      X      PIX     PIX     PIX     0-19
+GPU4    PHB     PHB     PHB     PIX      X      PIX     PIX     0-19
+GPU5    PHB     PHB     PHB     PIX     PIX      X      PIX     0-19
+GPU6    PHB     PHB     PHB     PIX     PIX     PIX      X      0-19
+```
+
+Azure 2x M60 - two GPUs on one board (nice):
+```
+GPU0    GPU1    CPU Affinity
+GPU0     X     SOC    0-11
+GPU1    SOC     X     0-11
+```
+
+TODO: measurements
+- bandwidth
+  - CUDA samples benchmark, nvprof from a training run
+- training experiments
+
+```
+cd /usr/local/cuda/samples/1_Utilities/bandwidthTest
+sudo make
+./bandwidthTest
+```
+
+Azure 2x M60:
+```
+[CUDA Bandwidth Test] - Starting...
+Running on...
+
+ Device 0: Tesla M60
+ Quick Mode
+
+ Host to Device Bandwidth, 1 Device(s)
+ PINNED Memory Transfers
+   Transfer Size (Bytes)	Bandwidth(MB/s)
+   33554432			6070.1
+
+ Device to Host Bandwidth, 1 Device(s)
+ PINNED Memory Transfers
+   Transfer Size (Bytes)	Bandwidth(MB/s)
+   33554432			6536.0
+
+ Device to Device Bandwidth, 1 Device(s)
+ PINNED Memory Transfers
+   Transfer Size (Bytes)	Bandwidth(MB/s)
+   33554432			133094.5
+
+Result = PASS
+```
 
 ## Implementations
 
@@ -209,7 +302,10 @@ TODO: run, measure, review
 
 - throughput (samples/sec), time per batch
 - TensorBoard
+  - how are operations distributed to devices?
 - nvprof
+  - compute utilization
+  - bandwidth
 
 ## Our attempt
 
