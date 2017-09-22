@@ -1,0 +1,2 @@
+- Blog article: https://devblogs.nvidia.com/parallelforall/how-optimize-data-transfers-cuda-cc/
+- Code: https://github.com/parallel-forall/code-samples/blob/master/series/cuda-cpp/optimize-data-transfers/

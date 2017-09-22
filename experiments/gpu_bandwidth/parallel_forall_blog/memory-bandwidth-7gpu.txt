@@ -1,0 +1,38 @@
+(keras207) bzamecnik@7gforce:~/nvidia-parallel-forall-code-samples/series/cuda-cpp/optimize-data-transfers$ CUDA_VISIBLE_DEVICES=6 ./bandwidthtest 
+
+Device: GeForce GTX 1080
+Transfer size (MB): 16
+
+Pageable transfers
+  Host to Device bandwidth (GB/s): 2.441729
+  Device to Host bandwidth (GB/s): 2.451594
+
+Pinned transfers
+  Host to Device bandwidth (GB/s): 2.428698
+  Device to Host bandwidth (GB/s): 2.477919
+
+(keras207) bzamecnik@7gforce:~/nvidia-parallel-forall-code-samples/series/cuda-cpp/optimize-data-transfers$ CUDA_VISIBLE_DEVICES=2 ./bandwidthtest
+
+Device: GeForce GTX 1070
+Transfer size (MB): 16
+
+Pageable transfers
+  Host to Device bandwidth (GB/s): 0.388181
+  Device to Host bandwidth (GB/s): 0.419566
+
+Pinned transfers
+  Host to Device bandwidth (GB/s): 0.409463
+  Device to Host bandwidth (GB/s): 0.419186
+
+(keras207) bzamecnik@7gforce:~/nvidia-parallel-forall-code-samples/series/cuda-cpp/optimize-data-transfers$ CUDA_VISIBLE_DEVICES=3 ./bandwidthtest
+
+Device: GeForce GTX 1070
+Transfer size (MB): 16
+
+Pageable transfers
+  Host to Device bandwidth (GB/s): 0.407978
+  Device to Host bandwidth (GB/s): 0.419114
+
+Pinned transfers
+  Host to Device bandwidth (GB/s): 0.410226
+  Device to Host bandwidth (GB/s): 0.437923
