@@ -17,6 +17,8 @@ from keras import backend as K
 import os
 import tensorflow as tf
 
+from keras_tf_multigpu.kuza55 import make_parallel
+
 # sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
 sess = tf.Session()
 K.set_session(sess)
@@ -77,47 +79,6 @@ ps_device = '/gpu:0'
 # gpu_count=1, batch_size=256, (layers=5 x 1024), 5M params -> 16 s / epoch
 # gpu_count=2, batch_size=256 * 2, (layers=5 x 1024), 5M params -> 8 s / epoch
 
-def make_parallel(model, gpu_count):
-    def get_slice(data, idx, parts):
-        shape = tf.shape(data)
-        size = tf.concat([shape[:1] // parts, shape[1:]], axis=0)
-        stride = tf.concat([shape[:1] // parts, shape[1:] * 0], axis=0)
-        start = stride * idx
-        return tf.slice(data, start, size)
-
-    outputs_all = []
-    for i in range(len(model.outputs)):
-        outputs_all.append([])
-
-    #Place a copy of the model on each GPU, each getting a slice of the batch
-    for i in range(gpu_count):
-        with tf.device('/gpu:%d' % i):
-            with tf.name_scope('tower_%d' % i) as scope:
-
-                inputs = []
-                #Slice each input into a piece for processing on this GPU
-                for x in model.inputs:
-                    input_shape = tuple(x.get_shape().as_list())[1:]
-                    slice_n = Lambda(get_slice, output_shape=input_shape, arguments={'idx':i,'parts':gpu_count})(x)
-                    inputs.append(slice_n)
-
-                outputs = model(inputs)
-
-                if not isinstance(outputs, list):
-                    outputs = [outputs]
-
-                #Save all the outputs for merging back together later
-                for l in range(len(outputs)):
-                    outputs_all[l].append(outputs[l])
-
-    # merge outputs on CPU
-    with tf.device(ps_device):
-        merged = []
-        for outputs in outputs_all:
-            merged.append(concatenate(outputs, axis=0))
-
-        return Model(inputs=model.inputs, outputs=merged)
-
 # the data, shuffled and split between train and test sets
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
@@ -149,13 +110,13 @@ tensorboard_dir = './tensorboard-logs/mnist_mlp_multi_ps_cpu/%d-gpu_%s' \
     % (gpu_count, os.environ.get('CUDA_VISIBLE_DEVICES', ''))
 
 with tf.device(ps_device):
-    if gpu_count > 1:
-        tower = basic_model()
-        model = make_parallel(tower, gpu_count)
-        print('Multi-GPU model:')
-        model.summary()
-    else:
-        model = basic_model()
+    serial_model = basic_model()
+    print('Serial model:')
+    serial_model.summary()
+
+    model = make_parallel(tower, gpu_count, ps_device)
+    print('Multi-GPU model:')
+    model.summary()
 
     model.compile(loss='categorical_crossentropy',
                   optimizer=RMSprop(),

@@ -1,5 +1,10 @@
 # adapted from: https://github.com/kuza55/keras-extras/blob/master/utils/multi_gpu.py
 #
+# - data-parallelism at the level of computing predictions and gradients
+#   in parallel
+# - no gradient averaging
+# - feed_dict, no queues
+#
 ## Example usage:
 #
 # # parameter server device

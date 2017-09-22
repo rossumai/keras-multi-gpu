@@ -1,5 +1,5 @@
 # run as:
-# ./benchmark_batch.sh 2>&1 |tee benchmark_batch_results.txt
+# time ./benchmark_batch.sh 2>&1 |tee benchmark_batch_results.txt
 set -x
 
 # models: alexnet, densenet, googlenet, inception, lenet, overfeat, resnet, trivial, vgg

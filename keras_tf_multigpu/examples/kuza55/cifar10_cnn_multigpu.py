@@ -21,48 +21,9 @@ from keras.models import Model
 
 import tensorflow as tf
 
+from keras_tf_multigpu.kuza55 import make_parallel
 
-def make_parallel(model, gpu_count):
-    def get_slice(data, idx, parts):
-        shape = tf.shape(data)
-        size = tf.concat([ shape[:1] // parts, shape[1:] ],axis=0)
-        stride = tf.concat([ shape[:1] // parts, shape[1:]*0 ],axis=0)
-        start = stride * idx
-        return tf.slice(data, start, size)
-
-    outputs_all = []
-    for i in range(len(model.outputs)):
-        outputs_all.append([])
-
-    # Place a copy of the model on each GPU, each getting a slice of the batch
-    for i in range(gpu_count):
-        with tf.device('/gpu:%d' % i):
-            with tf.name_scope('tower_%d' % i) as scope:
-
-                inputs = []
-                # Slice each input into a piece for processing on this GPU
-                for x in model.inputs:
-                    input_shape = tuple(x.get_shape().as_list())[1:]
-                    slice_n = Lambda(get_slice, output_shape=input_shape, arguments={'idx':i,'parts':gpu_count})(x)
-                    inputs.append(slice_n)
-
-                outputs = model(inputs)
-
-                if not isinstance(outputs, list):
-                    outputs = [outputs]
-
-                # Save all the outputs for merging back together later
-                for l in range(len(outputs)):
-                    outputs_all[l].append(outputs[l])
-
-    # merge outputs on CPU
-    with tf.device('/cpu:0'):
-        merged = []
-        for outputs in outputs_all:
-            merged.append(concatenate(outputs, axis=0))
-
-        return Model(input=model.inputs, output=merged)
-
+ps_device = '/gpu:0'
 gpu_count = 2
 
 batch_size = 32 * gpu_count
@@ -80,37 +41,41 @@ print(x_test.shape[0], 'test samples')
 y_train = keras.utils.to_categorical(y_train, num_classes)
 y_test = keras.utils.to_categorical(y_test, num_classes)
 
-model = Sequential()
+def basic_model():
+    model = Sequential()
 
-model.add(Conv2D(32, (3, 3), padding='same',
-                 input_shape=x_train.shape[1:]))
-model.add(Activation('relu'))
-model.add(Conv2D(32, (3, 3)))
-model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.25))
+    model.add(Conv2D(32, (3, 3), padding='same',
+                     input_shape=x_train.shape[1:]))
+    model.add(Activation('relu'))
+    model.add(Conv2D(32, (3, 3)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
 
-model.add(Conv2D(64, (3, 3), padding='same'))
-model.add(Activation('relu'))
-model.add(Conv2D(64, (3, 3)))
-model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.25))
+    model.add(Conv2D(64, (3, 3), padding='same'))
+    model.add(Activation('relu'))
+    model.add(Conv2D(64, (3, 3)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
 
-model.add(Flatten())
-model.add(Dense(512))
-model.add(Activation('relu'))
-model.add(Dropout(0.5))
-model.add(Dense(num_classes))
-model.add(Activation('softmax'))
+    model.add(Flatten())
+    model.add(Dense(512))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(num_classes))
+    model.add(Activation('softmax'))
 
-print('Single tower model:')
-model.summary()
+    return model
 
-model = make_parallel(model, gpu_count)
+with tf.device(ps_device):
+    serial_model = basic_model()
+    print('Serial model:')
+    serial_model.summary()
 
-print('Multi-GPU model:')
-model.summary()
+    model = make_parallel(tower, gpu_count, ps_device)
+    print('Multi-GPU model:')
+    model.summary()
 
 # initiate RMSprop optimizer
 opt = keras.optimizers.rmsprop(lr=0.0001, decay=1e-6)
