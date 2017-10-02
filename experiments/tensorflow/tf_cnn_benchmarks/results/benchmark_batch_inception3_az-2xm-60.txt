@@ -1,0 +1,327 @@
+++ TF_BENCHMARKS_PATH=.
+++ python ./tf_cnn_benchmarks.py --model inception3 --num_gpus 1
+2017-10-02 10:00:30.462500: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.1 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:00:30.462535: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.2 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:00:30.462541: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:00:30.462545: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX2 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:00:30.462548: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use FMA instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:00:37.042257: I tensorflow/core/common_runtime/gpu/gpu_device.cc:955] Found device 0 with properties: 
+name: Tesla M60
+major: 5 minor: 2 memoryClockRate (GHz) 1.1775
+pciBusID 9fa3:00:00.0
+Total memory: 7.93GiB
+Free memory: 7.86GiB
+2017-10-02 10:00:37.198584: W tensorflow/stream_executor/cuda/cuda_driver.cc:523] A non-primary context 0x8041d30 exists before initializing the StreamExecutor. We haven't verified StreamExecutor works with that.
+2017-10-02 10:00:37.199232: I tensorflow/core/common_runtime/gpu/gpu_device.cc:955] Found device 1 with properties: 
+name: Tesla M60
+major: 5 minor: 2 memoryClockRate (GHz) 1.1775
+pciBusID c533:00:00.0
+Total memory: 7.93GiB
+Free memory: 7.86GiB
+2017-10-02 10:00:37.199292: I tensorflow/core/common_runtime/gpu/gpu_device.cc:847] Peer access not supported between device ordinals 0 and 1
+2017-10-02 10:00:37.199311: I tensorflow/core/common_runtime/gpu/gpu_device.cc:847] Peer access not supported between device ordinals 1 and 0
+2017-10-02 10:00:37.199327: I tensorflow/core/common_runtime/gpu/gpu_device.cc:976] DMA: 0 1 
+2017-10-02 10:00:37.199339: I tensorflow/core/common_runtime/gpu/gpu_device.cc:986] 0:   Y N 
+2017-10-02 10:00:37.199343: I tensorflow/core/common_runtime/gpu/gpu_device.cc:986] 1:   N Y 
+2017-10-02 10:00:37.199352: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1045] Creating TensorFlow device (/gpu:0) -> (device: 0, name: Tesla M60, pci bus id: 9fa3:00:00.0)
+2017-10-02 10:00:37.199357: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1045] Creating TensorFlow device (/gpu:1) -> (device: 1, name: Tesla M60, pci bus id: c533:00:00.0)
+TensorFlow:  1.3
+Model:       inception3
+Mode:        training
+Batch size:  32 global
+             32 per device
+Devices:     ['/gpu:0']
+Data format: NCHW
+Optimizer:   sgd
+Variables:   parameter_server
+==========
+Generating model
+Running warm up
+Done warm up
+Step	Img/sec	loss
+1	images/sec: 49.7 +/- 0.0 (jitter = 0.0)	6.896
+10	images/sec: 48.9 +/- 0.6 (jitter = 1.7)	6.454
+20	images/sec: 48.4 +/- 0.5 (jitter = 1.7)	6.051
+30	images/sec: 47.8 +/- 0.5 (jitter = 2.1)	5.582
+40	images/sec: 47.7 +/- 0.5 (jitter = 2.4)	5.216
+50	images/sec: 47.7 +/- 0.4 (jitter = 2.2)	4.884
+60	images/sec: 47.6 +/- 0.4 (jitter = 2.1)	4.620
+70	images/sec: 47.6 +/- 0.4 (jitter = 2.2)	4.378
+80	images/sec: 47.5 +/- 0.3 (jitter = 2.3)	4.227
+90	images/sec: 47.5 +/- 0.3 (jitter = 2.2)	4.039
+100	images/sec: 47.5 +/- 0.3 (jitter = 2.2)	3.967
+----------------------------------------------------------------
+total images/sec: 47.49
+----------------------------------------------------------------
+++ python ./tf_cnn_benchmarks.py --model inception3 --num_gpus 2
+2017-10-02 10:02:07.562865: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.1 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:02:07.562924: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.2 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:02:07.562930: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:02:07.562933: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX2 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:02:07.562937: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use FMA instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:02:14.153694: I tensorflow/core/common_runtime/gpu/gpu_device.cc:955] Found device 0 with properties: 
+name: Tesla M60
+major: 5 minor: 2 memoryClockRate (GHz) 1.1775
+pciBusID 9fa3:00:00.0
+Total memory: 7.93GiB
+Free memory: 7.86GiB
+2017-10-02 10:02:14.290282: W tensorflow/stream_executor/cuda/cuda_driver.cc:523] A non-primary context 0xa4ad200 exists before initializing the StreamExecutor. We haven't verified StreamExecutor works with that.
+2017-10-02 10:02:14.290893: I tensorflow/core/common_runtime/gpu/gpu_device.cc:955] Found device 1 with properties: 
+name: Tesla M60
+major: 5 minor: 2 memoryClockRate (GHz) 1.1775
+pciBusID c533:00:00.0
+Total memory: 7.93GiB
+Free memory: 7.86GiB
+2017-10-02 10:02:14.290954: I tensorflow/core/common_runtime/gpu/gpu_device.cc:847] Peer access not supported between device ordinals 0 and 1
+2017-10-02 10:02:14.290974: I tensorflow/core/common_runtime/gpu/gpu_device.cc:847] Peer access not supported between device ordinals 1 and 0
+2017-10-02 10:02:14.290990: I tensorflow/core/common_runtime/gpu/gpu_device.cc:976] DMA: 0 1 
+2017-10-02 10:02:14.291002: I tensorflow/core/common_runtime/gpu/gpu_device.cc:986] 0:   Y N 
+2017-10-02 10:02:14.291006: I tensorflow/core/common_runtime/gpu/gpu_device.cc:986] 1:   N Y 
+2017-10-02 10:02:14.291015: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1045] Creating TensorFlow device (/gpu:0) -> (device: 0, name: Tesla M60, pci bus id: 9fa3:00:00.0)
+2017-10-02 10:02:14.291020: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1045] Creating TensorFlow device (/gpu:1) -> (device: 1, name: Tesla M60, pci bus id: c533:00:00.0)
+TensorFlow:  1.3
+Model:       inception3
+Mode:        training
+Batch size:  64 global
+             32 per device
+Devices:     ['/gpu:0', '/gpu:1']
+Data format: NCHW
+Optimizer:   sgd
+Variables:   parameter_server
+==========
+Generating model
+Running warm up
+Done warm up
+Step	Img/sec	loss
+1	images/sec: 96.8 +/- 0.0 (jitter = 0.0)	7.152
+10	images/sec: 94.9 +/- 2.0 (jitter = 3.2)	6.932
+20	images/sec: 94.6 +/- 1.4 (jitter = 3.5)	6.688
+30	images/sec: 94.6 +/- 1.2 (jitter = 4.1)	6.483
+40	images/sec: 95.1 +/- 1.0 (jitter = 4.3)	6.266
+50	images/sec: 95.2 +/- 0.9 (jitter = 4.3)	6.086
+60	images/sec: 94.7 +/- 0.9 (jitter = 4.2)	5.867
+70	images/sec: 95.0 +/- 0.8 (jitter = 4.3)	5.738
+80	images/sec: 95.0 +/- 0.8 (jitter = 4.4)	5.551
+90	images/sec: 94.8 +/- 0.7 (jitter = 4.3)	5.415
+100	images/sec: 94.7 +/- 0.7 (jitter = 3.8)	5.302
+----------------------------------------------------------------
+total images/sec: 94.72
+----------------------------------------------------------------
+++ python ./tf_cnn_benchmarks.py --model inception3 --num_gpus 2 --local_parameter_device cpu
+2017-10-02 10:03:47.313383: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.1 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:03:47.313435: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.2 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:03:47.313442: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:03:47.313446: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX2 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:03:47.313449: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use FMA instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:03:54.063329: I tensorflow/core/common_runtime/gpu/gpu_device.cc:955] Found device 0 with properties: 
+name: Tesla M60
+major: 5 minor: 2 memoryClockRate (GHz) 1.1775
+pciBusID 9fa3:00:00.0
+Total memory: 7.93GiB
+Free memory: 7.86GiB
+2017-10-02 10:03:54.205372: W tensorflow/stream_executor/cuda/cuda_driver.cc:523] A non-primary context 0x9ad9580 exists before initializing the StreamExecutor. We haven't verified StreamExecutor works with that.
+2017-10-02 10:03:54.206204: I tensorflow/core/common_runtime/gpu/gpu_device.cc:955] Found device 1 with properties: 
+name: Tesla M60
+major: 5 minor: 2 memoryClockRate (GHz) 1.1775
+pciBusID c533:00:00.0
+Total memory: 7.93GiB
+Free memory: 7.86GiB
+2017-10-02 10:03:54.206453: I tensorflow/core/common_runtime/gpu/gpu_device.cc:847] Peer access not supported between device ordinals 0 and 1
+2017-10-02 10:03:54.206582: I tensorflow/core/common_runtime/gpu/gpu_device.cc:847] Peer access not supported between device ordinals 1 and 0
+2017-10-02 10:03:54.206726: I tensorflow/core/common_runtime/gpu/gpu_device.cc:976] DMA: 0 1 
+2017-10-02 10:03:54.206822: I tensorflow/core/common_runtime/gpu/gpu_device.cc:986] 0:   Y N 
+2017-10-02 10:03:54.206909: I tensorflow/core/common_runtime/gpu/gpu_device.cc:986] 1:   N Y 
+2017-10-02 10:03:54.207000: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1045] Creating TensorFlow device (/gpu:0) -> (device: 0, name: Tesla M60, pci bus id: 9fa3:00:00.0)
+2017-10-02 10:03:54.207122: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1045] Creating TensorFlow device (/gpu:1) -> (device: 1, name: Tesla M60, pci bus id: c533:00:00.0)
+TensorFlow:  1.3
+Model:       inception3
+Mode:        training
+Batch size:  64 global
+             32 per device
+Devices:     ['/gpu:0', '/gpu:1']
+Data format: NCHW
+Optimizer:   sgd
+Variables:   parameter_server
+==========
+Generating model
+Running warm up
+Done warm up
+Step	Img/sec	loss
+1	images/sec: 98.7 +/- 0.0 (jitter = 0.0)	7.152
+10	images/sec: 96.4 +/- 1.9 (jitter = 1.0)	6.924
+20	images/sec: 95.5 +/- 1.4 (jitter = 2.4)	6.698
+30	images/sec: 94.8 +/- 1.3 (jitter = 2.4)	6.494
+40	images/sec: 95.2 +/- 1.1 (jitter = 2.5)	6.273
+50	images/sec: 95.4 +/- 1.0 (jitter = 2.4)	6.091
+60	images/sec: 95.0 +/- 1.0 (jitter = 2.9)	5.899
+70	images/sec: 95.2 +/- 0.9 (jitter = 3.5)	5.742
+80	images/sec: 95.4 +/- 0.8 (jitter = 3.7)	5.615
+90	images/sec: 95.2 +/- 0.8 (jitter = 3.7)	5.483
+100	images/sec: 95.3 +/- 0.7 (jitter = 3.9)	5.341
+----------------------------------------------------------------
+total images/sec: 95.43
+----------------------------------------------------------------
+++ python ./tf_cnn_benchmarks.py --model inception3 --num_gpus 2 --variable_update replicated
+2017-10-02 10:05:29.729365: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.1 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:05:29.729414: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.2 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:05:29.729421: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:05:29.729425: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX2 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:05:29.729429: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use FMA instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:05:36.481928: I tensorflow/core/common_runtime/gpu/gpu_device.cc:955] Found device 0 with properties: 
+name: Tesla M60
+major: 5 minor: 2 memoryClockRate (GHz) 1.1775
+pciBusID 9fa3:00:00.0
+Total memory: 7.93GiB
+Free memory: 7.86GiB
+2017-10-02 10:05:36.619254: W tensorflow/stream_executor/cuda/cuda_driver.cc:523] A non-primary context 0xb2c9bd0 exists before initializing the StreamExecutor. We haven't verified StreamExecutor works with that.
+2017-10-02 10:05:36.620025: I tensorflow/core/common_runtime/gpu/gpu_device.cc:955] Found device 1 with properties: 
+name: Tesla M60
+major: 5 minor: 2 memoryClockRate (GHz) 1.1775
+pciBusID c533:00:00.0
+Total memory: 7.93GiB
+Free memory: 7.86GiB
+2017-10-02 10:05:36.620089: I tensorflow/core/common_runtime/gpu/gpu_device.cc:847] Peer access not supported between device ordinals 0 and 1
+2017-10-02 10:05:36.620110: I tensorflow/core/common_runtime/gpu/gpu_device.cc:847] Peer access not supported between device ordinals 1 and 0
+2017-10-02 10:05:36.620127: I tensorflow/core/common_runtime/gpu/gpu_device.cc:976] DMA: 0 1 
+2017-10-02 10:05:36.620133: I tensorflow/core/common_runtime/gpu/gpu_device.cc:986] 0:   Y N 
+2017-10-02 10:05:36.620137: I tensorflow/core/common_runtime/gpu/gpu_device.cc:986] 1:   N Y 
+2017-10-02 10:05:36.620146: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1045] Creating TensorFlow device (/gpu:0) -> (device: 0, name: Tesla M60, pci bus id: 9fa3:00:00.0)
+2017-10-02 10:05:36.620151: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1045] Creating TensorFlow device (/gpu:1) -> (device: 1, name: Tesla M60, pci bus id: c533:00:00.0)
+TensorFlow:  1.3
+Model:       inception3
+Mode:        training
+Batch size:  64 global
+             32 per device
+Devices:     ['/gpu:0', '/gpu:1']
+Data format: NCHW
+Optimizer:   sgd
+Variables:   replicated
+Use NCCL:    True
+==========
+Generating model
+Running warm up
+Done warm up
+Step	Img/sec	loss
+1	images/sec: 96.6 +/- 0.0 (jitter = 0.0)	6.911
+10	images/sec: 92.1 +/- 2.7 (jitter = 5.3)	6.499
+20	images/sec: 94.0 +/- 1.8 (jitter = 3.9)	6.078
+30	images/sec: 95.3 +/- 1.4 (jitter = 3.5)	5.703
+40	images/sec: 94.8 +/- 1.3 (jitter = 3.7)	5.432
+50	images/sec: 94.9 +/- 1.1 (jitter = 4.1)	5.160
+60	images/sec: 95.2 +/- 1.0 (jitter = 3.8)	4.953
+70	images/sec: 94.6 +/- 0.9 (jitter = 4.6)	4.792
+80	images/sec: 94.6 +/- 0.8 (jitter = 4.5)	4.622
+90	images/sec: 94.9 +/- 0.8 (jitter = 4.3)	4.480
+100	images/sec: 94.7 +/- 0.8 (jitter = 4.5)	4.304
+----------------------------------------------------------------
+total images/sec: 94.57
+----------------------------------------------------------------
+++ python ./tf_cnn_benchmarks.py --model inception3 --num_gpus 2 --variable_update replicated --use_nccl False
+2017-10-02 10:07:14.356648: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.1 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:07:14.356708: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.2 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:07:14.356714: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:07:14.356718: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX2 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:07:14.356722: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use FMA instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:07:21.421814: I tensorflow/core/common_runtime/gpu/gpu_device.cc:955] Found device 0 with properties: 
+name: Tesla M60
+major: 5 minor: 2 memoryClockRate (GHz) 1.1775
+pciBusID 9fa3:00:00.0
+Total memory: 7.93GiB
+Free memory: 7.86GiB
+2017-10-02 10:07:21.555664: W tensorflow/stream_executor/cuda/cuda_driver.cc:523] A non-primary context 0xaca5490 exists before initializing the StreamExecutor. We haven't verified StreamExecutor works with that.
+2017-10-02 10:07:21.556395: I tensorflow/core/common_runtime/gpu/gpu_device.cc:955] Found device 1 with properties: 
+name: Tesla M60
+major: 5 minor: 2 memoryClockRate (GHz) 1.1775
+pciBusID c533:00:00.0
+Total memory: 7.93GiB
+Free memory: 7.86GiB
+2017-10-02 10:07:21.556456: I tensorflow/core/common_runtime/gpu/gpu_device.cc:847] Peer access not supported between device ordinals 0 and 1
+2017-10-02 10:07:21.556476: I tensorflow/core/common_runtime/gpu/gpu_device.cc:847] Peer access not supported between device ordinals 1 and 0
+2017-10-02 10:07:21.556492: I tensorflow/core/common_runtime/gpu/gpu_device.cc:976] DMA: 0 1 
+2017-10-02 10:07:21.556503: I tensorflow/core/common_runtime/gpu/gpu_device.cc:986] 0:   Y N 
+2017-10-02 10:07:21.556508: I tensorflow/core/common_runtime/gpu/gpu_device.cc:986] 1:   N Y 
+2017-10-02 10:07:21.556517: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1045] Creating TensorFlow device (/gpu:0) -> (device: 0, name: Tesla M60, pci bus id: 9fa3:00:00.0)
+2017-10-02 10:07:21.556522: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1045] Creating TensorFlow device (/gpu:1) -> (device: 1, name: Tesla M60, pci bus id: c533:00:00.0)
+TensorFlow:  1.3
+Model:       inception3
+Mode:        training
+Batch size:  64 global
+             32 per device
+Devices:     ['/gpu:0', '/gpu:1']
+Data format: NCHW
+Optimizer:   sgd
+Variables:   replicated
+Use NCCL:    False
+==========
+Generating model
+Running warm up
+Done warm up
+Step	Img/sec	loss
+1	images/sec: 93.8 +/- 0.0 (jitter = 0.0)	6.938
+10	images/sec: 97.1 +/- 1.7 (jitter = 3.2)	6.517
+20	images/sec: 95.1 +/- 1.6 (jitter = 4.7)	6.118
+30	images/sec: 95.0 +/- 1.2 (jitter = 4.4)	5.776
+40	images/sec: 95.3 +/- 1.0 (jitter = 3.9)	5.485
+50	images/sec: 95.3 +/- 1.0 (jitter = 4.2)	5.269
+60	images/sec: 95.4 +/- 0.8 (jitter = 4.0)	5.053
+70	images/sec: 95.4 +/- 0.8 (jitter = 4.1)	4.826
+80	images/sec: 95.2 +/- 0.8 (jitter = 4.0)	4.652
+90	images/sec: 95.1 +/- 0.7 (jitter = 4.0)	4.500
+100	images/sec: 95.0 +/- 0.7 (jitter = 3.7)	4.310
+----------------------------------------------------------------
+total images/sec: 95.33
+----------------------------------------------------------------
+++ python ./tf_cnn_benchmarks.py --model inception3 --num_gpus 2 --variable_update independent
+2017-10-02 10:08:57.784272: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.1 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:08:57.784372: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.2 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:08:57.784399: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:08:57.784420: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX2 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:08:57.784439: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use FMA instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-02 10:09:04.281979: I tensorflow/core/common_runtime/gpu/gpu_device.cc:955] Found device 0 with properties: 
+name: Tesla M60
+major: 5 minor: 2 memoryClockRate (GHz) 1.1775
+pciBusID 9fa3:00:00.0
+Total memory: 7.93GiB
+Free memory: 7.86GiB
+2017-10-02 10:09:04.418546: W tensorflow/stream_executor/cuda/cuda_driver.cc:523] A non-primary context 0xb87d140 exists before initializing the StreamExecutor. We haven't verified StreamExecutor works with that.
+2017-10-02 10:09:04.419195: I tensorflow/core/common_runtime/gpu/gpu_device.cc:955] Found device 1 with properties: 
+name: Tesla M60
+major: 5 minor: 2 memoryClockRate (GHz) 1.1775
+pciBusID c533:00:00.0
+Total memory: 7.93GiB
+Free memory: 7.86GiB
+2017-10-02 10:09:04.419287: I tensorflow/core/common_runtime/gpu/gpu_device.cc:847] Peer access not supported between device ordinals 0 and 1
+2017-10-02 10:09:04.419332: I tensorflow/core/common_runtime/gpu/gpu_device.cc:847] Peer access not supported between device ordinals 1 and 0
+2017-10-02 10:09:04.419380: I tensorflow/core/common_runtime/gpu/gpu_device.cc:976] DMA: 0 1 
+2017-10-02 10:09:04.419411: I tensorflow/core/common_runtime/gpu/gpu_device.cc:986] 0:   Y N 
+2017-10-02 10:09:04.419427: I tensorflow/core/common_runtime/gpu/gpu_device.cc:986] 1:   N Y 
+2017-10-02 10:09:04.419449: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1045] Creating TensorFlow device (/gpu:0) -> (device: 0, name: Tesla M60, pci bus id: 9fa3:00:00.0)
+2017-10-02 10:09:04.419476: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1045] Creating TensorFlow device (/gpu:1) -> (device: 1, name: Tesla M60, pci bus id: c533:00:00.0)
+TensorFlow:  1.3
+Model:       inception3
+Mode:        training
+Batch size:  64 global
+             32 per device
+Devices:     ['/gpu:0', '/gpu:1']
+Data format: NCHW
+Optimizer:   sgd
+Variables:   independent
+==========
+Generating model
+Running warm up
+Done warm up
+Step	Img/sec	loss
+1	images/sec: 99.4 +/- 0.0 (jitter = 0.0)	6.954
+10	images/sec: 96.2 +/- 2.3 (jitter = 1.1)	6.487
+20	images/sec: 96.6 +/- 1.7 (jitter = 2.7)	6.043
+30	images/sec: 96.0 +/- 1.4 (jitter = 3.6)	5.626
+40	images/sec: 96.4 +/- 1.2 (jitter = 3.2)	5.259
+50	images/sec: 96.5 +/- 1.0 (jitter = 3.3)	4.982
+60	images/sec: 96.0 +/- 1.0 (jitter = 3.2)	4.687
+70	images/sec: 95.7 +/- 0.9 (jitter = 2.7)	4.480
+80	images/sec: 95.8 +/- 0.8 (jitter = 2.7)	4.316
+90	images/sec: 95.6 +/- 0.8 (jitter = 3.0)	4.146
+100	images/sec: 95.7 +/- 0.7 (jitter = 2.7)	3.993
+----------------------------------------------------------------
+total images/sec: 95.50
+----------------------------------------------------------------
