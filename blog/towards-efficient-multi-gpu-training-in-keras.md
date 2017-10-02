@@ -89,13 +89,13 @@ K. Chen and Q. Huo, "Scalable training of deep learning machines by incremental 
 
 ### Comparison of a custom 7-GPU machine with cloud instances
 
-- 7-GPU - 6x 1070 + 1x 1080
+- `7gforce` - DIY machine - 6x 1070 + 1x 1080
   - too many devices share limited number of PCIe lanes
   - too slow host-device connection even for one device
-  - in practice doesn't work well for multi-GPU training
-- Azure Standard_NV12 (2x Tesla M60)
+  - in practice it's a bit limited for multi-GPU training
+- `az-2x-m60` - Azure Standard_NV12 (2x Tesla M60)
   - seems to work well
-- Azure Standard_NV24 (4x Tesla M60) - TOOD
+- `az-4x-m60` - Azure Standard_NV24 (4x Tesla M60) - TODO
 - HW with NVLink (like NVIDIA DGX-1) would be much better
   - we don't have access to any -> can't measure
 
@@ -118,7 +118,7 @@ Legend:
   NV#  = Connection traversing a bonded set of # NVLinks
 ```
 
-7gpu - two groups (within group just PCIe switch, between via CPU):
+7gforce - two groups (within group just PCIe switch, between via CPU):
 ```
         GPU0    GPU1    GPU2    GPU3    GPU4    GPU5    GPU6    CPU Affinity
 GPU0     X      PIX     PIX     PHB     PHB     PHB     PHB     0-19
@@ -130,7 +130,7 @@ GPU5    PHB     PHB     PHB     PIX     PIX      X      PIX     0-19
 GPU6    PHB     PHB     PHB     PIX     PIX     PIX      X      0-19
 ```
 
-Azure 2x M60 - two GPUs on one board (nice):
+Azure 2x M60: - two GPUs on each board, but it seems the the GPUs communicate via QPI:
 ```
 GPU0    GPU1    CPU Affinity
 GPU0     X     SOC    0-11
@@ -148,31 +148,16 @@ sudo make
 ./bandwidthTest
 ```
 
-Azure 2x M60:
-```
-[CUDA Bandwidth Test] - Starting...
-Running on...
+Measurements:
 
- Device 0: Tesla M60
- Quick Mode
+https://docs.google.com/spreadsheets/d/1c5yGydEANMzHjBufTzph0w-WGwJyiwPMRYz3yBZatb4/edit#gid=126374473
 
- Host to Device Bandwidth, 1 Device(s)
- PINNED Memory Transfers
-   Transfer Size (Bytes)	Bandwidth(MB/s)
-   33554432			6070.1
+Observations:
 
- Device to Host Bandwidth, 1 Device(s)
- PINNED Memory Transfers
-   Transfer Size (Bytes)	Bandwidth(MB/s)
-   33554432			6536.0
-
- Device to Device Bandwidth, 1 Device(s)
- PINNED Memory Transfers
-   Transfer Size (Bytes)	Bandwidth(MB/s)
-   33554432			133094.5
-
-Result = PASS
-```
+- host <-> device bandwidth for the 1070 GPUs in the 7gforce machine is terribly low (8x lower than for others)
+- host <-> device bandwidth for the 1080 GPU in 7gforce and M60 GPUs in Azure machine is comparable
+- device to device bandwidth in the 1080 GPU is much high than for others
+- device to device bandwidth in 1070 GPUs vary wildly (possibly depending on runtime configuration???)
 
 ## Implementations
 
@@ -343,6 +328,21 @@ The rest of changes may further improve performance but probably are not vital.
 So far `kuza55/make_parallel` just computes predictions
 
 - does proper gradient averaging instead of concatenating the outputs
+
+#### NCHW data format
+
+https://www.tensorflow.org/performance/performance_guide#data_formats
+
+Ordering of dimensions in the data format for image data matters for GPU training. There are two conventions:
+
+- `NCHW` or `channels_first`
+- `NHWC` or `channels_last`
+
+cuDNN is optimized for NCHW, TensorFlow and Keras support both (`NHWC` is default in TF). In Keras it's possible to set it in [`keras.json`](https://keras.io/backend/#kerasjson-details) config file.
+
+Measurements:
+
+Training with NCHW was faster by 15-25% which is quite significant.
 
 ### Optimized communication with NCCL operations
 
