@@ -73,7 +73,7 @@ with tf.device(ps_device):
     print('Serial model:')
     serial_model.summary()
 
-    model = make_parallel(tower, gpu_count, ps_device)
+    model = make_parallel(serial_model, gpu_count, ps_device)
     print('Multi-GPU model:')
     model.summary()
 
