@@ -57,13 +57,12 @@ def make_parallel(model, gpu_count, ps_device):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='kuza55 make_parallel test.')
     parser.add_argument('-g', '--gpus', default=1, type=int, help='Number of GPUs to use')
-    parser.add_argument('-p', '--parameter-server', default='cpu', help='Parameter server device (cpu, gpu)')
+    parser.add_argument('-p', '--parameter-server', default='cpu', help='Parameter server device (cpu, gpu, default)')
     parser.add_argument('-e', '--epochs', default=5, type=int, help='Number of epochs')
     args = parser.parse_args()
-    ps_device = '/%s:0' % args.parameter_server
+    ps_device = '/gpu:0' if args.parameter_server == 'gpu' else '/cpu:0'
 
-    # source: https://medium.com/@kuza55/transparent-multi-gpu-training-on-tensorflow-with-keras-8b0016fd9012
-    with tf.device(ps_device):
+    def make_model():
         model = Sequential()
         model.add(Dense(4000, input_dim=8000, activation='tanh'))
         model.add(Dense(2000, input_dim=8000, activation='relu'))
@@ -75,6 +74,15 @@ if __name__ == '__main__':
             model = make_parallel(model, args.gpus, ps_device)
         optimizer = keras.optimizers.Adam(lr=0.0001)
         model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+        return model
+
+    # source: https://medium.com/@kuza55/transparent-multi-gpu-training-on-tensorflow-with-keras-8b0016fd9012
+    if args.parameter_server != 'default':
+        with tf.device(ps_device):
+            model = make_model()
+    else:
+        # the original behavior: no explicit tf.device()
+        model = make_model()
 
     x = np.random.rand(131072, 8000)
     y = np.random.randint(0, 2, (131072, 1))
