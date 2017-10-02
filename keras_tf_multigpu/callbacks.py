@@ -47,3 +47,20 @@ class BatchTiming(Callback):
         median_epoch_time = np.median(self.all_epoch_times)
         print('Overall - batch (median): %0.5f, epoch (median): %0.5f (sec)' % \
             (median_batch_time, median_epoch_time))
+
+class SamplesPerSec(Callback):
+    def on_train_begin(self, logs={}):
+        self.all_samples_per_sec = []
+
+    def on_batch_begin(self, batch, logs={}):
+        self.start_time = time.time()
+        self.batch_size = logs['size']
+
+    def on_batch_end(self, batch, logs={}):
+        end_time = time.time()
+        elapsed_time = end_time - self.start_time
+        samples_per_sec = self.batch_size / elapsed_time
+        self.all_samples_per_sec.append(samples_per_sec)
+
+    def on_epoch_end(self, epoch, logs={}):
+        print('Samples/sec: %0.1f' % np.median(self.all_samples_per_sec))
