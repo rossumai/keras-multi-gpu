@@ -77,12 +77,12 @@ if __name__ == '__main__':
         return model
 
     # source: https://medium.com/@kuza55/transparent-multi-gpu-training-on-tensorflow-with-keras-8b0016fd9012
-    if args.parameter_server != 'default':
-        with tf.device(ps_device):
-            model = make_model()
-    else:
+    if args.parameter_server == 'default' or args.gpus < 2:
         # the original behavior: no explicit tf.device()
         model = make_model()
+    else:
+        with tf.device(ps_device):
+            model = make_model()
 
     x = np.random.rand(131072, 8000)
     y = np.random.randint(0, 2, (131072, 1))
