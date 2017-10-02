@@ -20,7 +20,7 @@ import tensorflow as tf
 from keras_tf_multigpu.kuza55 import make_parallel
 
 # sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
-sess = tf.Session()
+sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
 K.set_session(sess)
 
 gpu_count = len([dev for dev in os.environ.get('CUDA_VISIBLE_DEVICES', '').split(',') if len(dev.strip()) > 0])
@@ -114,7 +114,7 @@ with tf.device(ps_device):
     print('Serial model:')
     serial_model.summary()
 
-    model = make_parallel(tower, gpu_count, ps_device)
+    model = make_parallel(serial_model, gpu_count, ps_device)
     print('Multi-GPU model:')
     model.summary()
 
