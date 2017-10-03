@@ -1,0 +1,5 @@
+# MkDocs static site generator
+# http://www.mkdocs.org/user-guide/configuration/
+
+site_name: Multi-GPU Keras on TensorFlow
+theme: readthedocs
