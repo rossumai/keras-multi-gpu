@@ -2,16 +2,16 @@ test:
 	nosetests
 
 install:
-	pip install tfr
+	pip install keras_tf_multigpu
 
 install_dev:
 	pip install -e .
 
 uninstall:
-	pip uninstall tfr
+	pip uninstall keras_tf_multigpu
 
 clean:
-	rm -r build/ dist/ tfr.egg-info/
+	rm -r build/ dist/ keras_tf_multigpu.egg-info/
 
 # twine - a tool for uploading packages to PyPI
 install_twine:
@@ -23,7 +23,7 @@ build:
 
 # PyPI production
 pypi_register:
-	twine register dist/tfr-*.whl
+	twine register dist/keras_tf_multigpu-*.whl
 
 publish:
 	twine upload dist/*
@@ -36,4 +36,4 @@ test_publish:
 	python setup.py sdist upload -r pypitest
 
 test_install:
-	pip install --verbose --index-url https://testpypi.python.org/pypi/ tfr
+	pip install --verbose --index-url https://testpypi.python.org/pypi/ keras_tf_multigpu
