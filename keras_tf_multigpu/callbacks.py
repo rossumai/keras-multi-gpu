@@ -63,4 +63,7 @@ class SamplesPerSec(Callback):
         self.all_samples_per_sec.append(samples_per_sec)
 
     def on_epoch_end(self, epoch, logs={}):
-        print('Samples/sec: %0.1f' % np.median(self.all_samples_per_sec))
+        self.print_results()
+
+    def print_results(self):
+        print('Samples/sec: %0.2f' % np.median(self.all_samples_per_sec))
