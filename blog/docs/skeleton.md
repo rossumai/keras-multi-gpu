@@ -10,10 +10,6 @@ So let's try to dive in the problem, see the landscape of of solutions and revie
 
 ## Introduction
 
-### Why?
-
-It's not uncommon that bigger models take many hours to train. We already parallelize the computation by using many-core GPUs. Next step is using multiple GPUs. Although we introduce more complexity, we expect decrease in training time. Ideally the training should scale inversely and the throughput of data samples per second linearly with respect to the number of GPUs. Of course we also expect some overhead of operations that cannot be parallelized.
-
 ### Keras + TensorFlow
 
 Let's break the backend transparency and use TF operations explicitly.
@@ -46,6 +42,10 @@ Let's break the backend transparency and use TF operations explicitly.
     - users report it scales well
     - quite rough prototype, no python package yet
     - so far the best starting ground
+
+Suggested improvement over kuza55/avolkov1 (until using a queue):
+
+Instead of broadcasting the full batch and then slicing, perform scatter. Otherwise we copy N-1 subbatches just to ignore them, wasting precious bandwidth.
 
 ## Roadmap
 
