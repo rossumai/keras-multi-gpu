@@ -1,5 +1,7 @@
 # Measurements
 
+[Big sheet with measurments](https://docs.google.com/spreadsheets/d/1c5yGydEANMzHjBufTzph0w-WGwJyiwPMRYz3yBZatb4/edit)
+
 - questions
 - what to measure:
     - throughput (samples/sec) - used in TF benchmarks

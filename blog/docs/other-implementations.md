@@ -13,6 +13,7 @@ Resources:
   - [High-Performance Models](https://www.tensorflow.org/performance/performance_models)
   - [Benchmarks](https://www.tensorflow.org/performance/benchmarks)
     - [tf_cnn_benchmarks.py]( https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py)
+      - multiple options: PS at CPU/GPU, replicated, +NCCL, distributed, etc.
 
 #### How it works?
 
@@ -68,7 +69,7 @@ Pure CNTK claims to support multi-GPU training, including synchronous and asynch
 - [Enabling 1-bit SGD]( https://docs.microsoft.com/en-us/cognitive-toolkit/Enabling-1bit-SGD)
     - seems to be slightly faster than plain synchronous SGD, not too much
     - only an crude approximation of gradient
-    - strange licensing :)
+    - strange licensing stuff :)
 
 #### Keras + CNTK
 

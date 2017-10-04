@@ -270,9 +270,9 @@ Expected topology:
 
 - host <-> device bandwidth for the 1070 GPUs is terribly low (~750 MB/s) - because of 1x PCIe risers
 - host <-> device bandwidth for the 1080 rather ok (~6.3 GB/s)
-  - still it operates on a x8 slot instead of x16
-  - would be interesting to measure for x16, should be still twice faster
-  - a side note: another GTX 980 Ti at x16 slot makes 12.9 GB/s
+    - still it operates on a x8 slot instead of x16
+    - would be interesting to measure for x16, should be still twice faster
+    - a side note: another GTX 980 Ti at x16 slot makes 12.9 GB/s
 - for unidirectional transfer devices 0,2,3,5 are 2.26x slower then 1,4 - why?
 - for bidirectional transfer devices 0-5 have similar speed
 - peer-to-peer transfers between all device pairs are allowed
@@ -288,10 +288,8 @@ Expected topology:
 - host to device: 6 GB/s (within PCIe x8)
 - device to host: 6.5 GB/s (within PCIe x8)
 - device to device (within a GPU): 133.2 GB/s (max. 160 GB/s, 83%)
--
 - peer-to-peer transfer between device pairs are not allowed!
-  -
-  - anyway the transfer speed is high (5.26 GB/s)
+    - anyway the transfer speed is high (5.26 GB/s)
 
 Comparison:
 
@@ -300,4 +298,4 @@ Comparison:
 
 ## Conclusion
 
-We presented
+TODO
