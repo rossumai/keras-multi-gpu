@@ -8,7 +8,7 @@ from keras.optimizers import (
     clip_norm, Optimizer,
     Adagrad, Adadelta, Adam, Adamax, Nadam, RMSprop, SGD)
 
-from keras_exp._mixin_common import mixedomatic
+from ._mixin_common import mixedomatic
 
 _DEBUG = False
 if _DEBUG:
@@ -274,4 +274,3 @@ class RMSPropMGPU(OptimizerMultiGPUMixin, RMSprop):
 @mixedomatic(ignore_kargs_spec=True)
 class SGD_MGPU(OptimizerMultiGPUMixin, SGD):
     pass
-
