@@ -228,7 +228,7 @@ GPU 0  GPU 1  GPU 2   GPU 3  GPU 4  GPU 5  GPU 6
 `az-2x-m60`:
 
 - two GPUs on each board, but it seems the the GPUs communicate via QPI (interconnect between multiple CPU sockets)
-  - "SOC = Connection traversing PCIe as well as the SMP link between CPU sockets(e.g. QPI)" - SOC probably from "_soc_ket"
+  - "SOC = Connection traversing PCIe as well as the SMP link between CPU sockets(e.g. QPI)" - SOC probably from `_soc_ket`
 - strange: I'd expect that two GPUs on one board would be provisioned to the VM. It seems that we've been provisioned another GPU from the second board which is connected to another CPU. It would be interesting to compare the topology for several VMs. Others may be allocated within one CPU.
 
 ```text

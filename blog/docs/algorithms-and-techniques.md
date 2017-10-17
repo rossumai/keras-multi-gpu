@@ -97,6 +97,18 @@ A solution to that is feeding the data asynchronously.
     - during computation another batch is being copied to the GPU memory
 - it requires that each batch can be prepared through the whole pipeline faster than the time for the computation
 
+#### TensorFlow queues
+
+- seems to perform only async feeding into TF memory on CPU
+
+#### StagingArea
+
+- seems to really implement a GPU-resident queue and can do double buffering
+
+#### Dataset API
+
+- ???
+
 ### Batch size / sub-batch size
 
 [As explained by Tim Dettmers](http://timdettmers.com/2014/10/09/deep-learning-data-parallelism/), in order not to waste GPU resources batch size for one GPU should an integer multiple of 32 and at least 64. When we use multiple GPUs we should keep the size of each sub-batch the same, thus the total mini-batch size can be computed as `batch_size = gpu_count * sub_batch_size`. For example for 2,4 or 8 GPUs we should have batch size of at least 128, 256 or 512 respectively. Too big batch size will result in out-of-memory error (OOM). Also we should make sure we can generate/provide data samples fast enough.
@@ -145,8 +157,8 @@ No matter if we use parameter server or replicated mode, we have to transfer gra
 
 - implicit copy
 - NCCL
-  - [NVIDIA blog: Fast Multi-GPU collectives with NCCL](https://devblogs.nvidia.com/parallelforall/fast-multi-gpu-collectives-nccl/
-  - [](https://www.tensorflow.org/performance/performance_models#replicated_variables_in_distributed_training#nccl)
+    - [NVIDIA blog: Fast Multi-GPU collectives with NCCL](https://devblogs.nvidia.com/parallelforall/fast-multi-gpu-collectives-nccl/)
+    - [TF performance models - about NCCL](https://www.tensorflow.org/performance/performance_models#replicated_variables_in_distributed_training#nccl)
 
 By default TensorFlow performs implicit copy. In most cases (few GPUs) this is the fastest option. Another option is NCCL, an NVIDIA's optimized implementation of collective operations, such as broadcast, scatter, gather or aggregate. It's available in TensorFlow in [tf.contrib.nccl](https://www.tensorflow.org/api_docs/python/tf/contrib/nccl). Also TensorFlow reports it can be useful for 8 or more GPUs, so probably for simpler setups increased complexity is not worth it.
 

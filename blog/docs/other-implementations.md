@@ -14,6 +14,7 @@ Resources:
   - [Benchmarks](https://www.tensorflow.org/performance/benchmarks)
     - [tf_cnn_benchmarks.py]( https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py)
       - multiple options: PS at CPU/GPU, replicated, +NCCL, distributed, etc.
+      - uses StagingArea instead of TF queues or Dataset API
 
 #### How it works?
 

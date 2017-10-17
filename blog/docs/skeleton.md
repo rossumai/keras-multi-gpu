@@ -61,12 +61,6 @@ For multi-GPU setup, this approach would solve one more problem of `kuza55/make_
 
 The rest of changes may further improve performance but probably are not vital.
 
-### Gradient averaging
-
-So far `kuza55/make_parallel` just computes predictions
-
-- do proper gradient averaging instead of concatenating the outputs
-
 ### Quantized gradients
 
 A limiting factor is exchanging gradients and weights between GPUs or with CPU.
@@ -82,15 +76,3 @@ Nice to have. Doesn't seem to be implemented in Keras/TF so far.
     - NCHW vs. NHWC
 - we need to be able to save/load the weights successfully
 - nicer API, not hacky
-
-## Conclusion
-
-What remains to efficient multi-GPU data-parallel training in Keras over TensorFlow?
-
-- seems necessary:
-    - using a queue for asynchronous data feeding
-- extra performance:
-    - NCHW
-- nice to have:
-    - Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour
-    - Quantized gradients
