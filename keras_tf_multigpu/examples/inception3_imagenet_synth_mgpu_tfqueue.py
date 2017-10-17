@@ -38,6 +38,8 @@ from keras.callbacks import ModelCheckpoint
 
 from keras.optimizers import RMSprop
 
+from keras.applications import InceptionV3, ResNet50
+
 from keras_tf_multigpu.avolkov1 import (get_available_gpus, print_mgpu_modelsummary)
 from keras_tf_multigpu.avolkov1 import make_parallel
 
@@ -74,76 +76,37 @@ def parser_(desc):
     return args
 
 
-def make_model(train_input, num_classes, weights_file=None):
+def make_model(train_input, num_classes):
     '''
     :param train_input: Either tensorflow Tensor or tuple/list shape. Bad style
         since the parameter can be of different types, but seems Ok here.
     :type train_input: tf.Tensor or tuple/list
     '''
-    model = Sequential()
-    # model.add(KL.InputLayer(input_shape=inshape[1:]))
+    # random weights
     if isinstance(train_input, tf.Tensor):
-        model.add(KL.InputLayer(input_tensor=train_input))
+        model = InceptionV3(input_tensor=train_input, classes=num_classes, weights=None)
     else:
-        model.add(KL.InputLayer(input_shape=train_input))
-    model.add(KL.Conv2D(32, (3, 3), padding='same'))
-    model.add(KL.Activation('relu'))
-    model.add(KL.Conv2D(32, (3, 3)))
-    model.add(KL.Activation('relu'))
-    model.add(KL.MaxPooling2D(pool_size=(2, 2)))
-    model.add(KL.Dropout(0.25))
-
-    model.add(KL.Conv2D(64, (3, 3), padding='same'))
-    model.add(KL.Activation('relu'))
-    model.add(KL.Conv2D(64, (3, 3)))
-    model.add(KL.Activation('relu'))
-    model.add(KL.MaxPooling2D(pool_size=(2, 2)))
-    model.add(KL.Dropout(0.25))
-
-    model.add(KL.Flatten())
-    model.add(KL.Dense(512))
-    model.add(KL.Activation('relu'))
-    model.add(KL.Dropout(0.5))
-    model.add(KL.Dense(num_classes))
-    model.add(KL.Activation('softmax'))
-
-    if weights_file is not None and os.path.exists(weights_file):
-        model.load_weights(weights_file)
+        model = InceptionV3(input_shape=train_input, classes=num_classes, weights=None)
 
     return model
 
 
-def cifar10_load_data(path):
-    """Loads CIFAR10 dataset.
+def synthesize_imagenet_dataset(class_count):
+    from datasets import create_synth_dataset
 
-    # Returns
-        Tuple of Numpy arrays: `(x_train, y_train), (x_test, y_test)`.
-    """
-    dirname = 'cifar-10-batches-py'
-    # origin = 'http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
-    # path = get_file(dirname, origin=origin, untar=True)
-    path_ = os.path.join(path, dirname)
+    # In this example the dataset is baked in the TF graph, so we have to keep
+    # the number of samples low enough to fit within 2 GB.
+    x_train, y_train = create_synth_dataset(299, class_count, 500)
+    x_test, y_test = create_synth_dataset(299, class_count, 10)
 
-    num_train_samples = 50000
+    # otherwise: "Tensor conversion requested dtype float64 for Tensor with dtype float32"
+    # https://stackoverflow.com/questions/35382409/tensorflow-error-when-calculating-cross-entropy-loss
+    y_train = y_train.astype(np.float32)
+    y_test = y_test.astype(np.float32)
 
-    x_train = np.zeros((num_train_samples, 3, 32, 32), dtype='uint8')
-    y_train = np.zeros((num_train_samples,), dtype='uint8')
-
-    for i in range(1, 6):
-        fpath = os.path.join(path_, 'data_batch_' + str(i))
-        data, labels = cifar10.load_batch(fpath)
-        x_train[(i - 1) * 10000: i * 10000, :, :, :] = data
-        y_train[(i - 1) * 10000: i * 10000] = labels
-
-    fpath = os.path.join(path_, 'test_batch')
-    x_test, y_test = cifar10.load_batch(fpath)
-
-    y_train = np.reshape(y_train, (len(y_train), 1))
-    y_test = np.reshape(y_test, (len(y_test), 1))
-
-    if KB.image_data_format() == 'channels_last':
-        x_train = x_train.transpose(0, 2, 3, 1)
-        x_test = x_test.transpose(0, 2, 3, 1)
+    # if KB.image_data_format() == 'channels_last':
+    #     x_train = x_train.transpose(0, 2, 3, 1)
+    #     x_test = x_test.transpose(0, 2, 3, 1)
 
     return (x_train, y_train), (x_test, y_test)
 
@@ -166,9 +129,9 @@ def main(argv=None):
     gdev_list = get_available_gpus(mgpu or 1)
     ngpus = len(gdev_list)
 
-    batch_size_1gpu = 512
+    batch_size_1gpu = 32
     batch_size = batch_size_1gpu * ngpus
-    num_classes = 10
+    num_classes = 1000
     epochs = args.epochs
     data_augmentation = args.aug
 
@@ -177,8 +140,7 @@ def main(argv=None):
     datadir = getattr(args, 'datadir', None)
 
     # The data, shuffled and split between train and test sets:
-    (x_train, y_train), (x_test, y_test) = cifar10_load_data(datadir) \
-        if datadir is not None else cifar10.load_data()
+    (x_train, y_train), (x_test, y_test) = synthesize_imagenet_dataset(num_classes)
     train_samples = x_train.shape[0]
     test_samples = y_test.shape[0]
     steps_per_epoch = train_samples // batch_size
@@ -188,14 +150,6 @@ def main(argv=None):
     # validations_steps = test_samples // batch_size
     print(x_train.shape[0], 'train samples')
     print(x_test.shape[0], 'test samples')
-
-    x_train = x_train.astype('float32')
-    x_test = x_test.astype('float32')
-    x_train /= 255
-    x_test /= 255
-
-    y_train = to_categorical(y_train, num_classes).astype(np.float32)
-    y_test = to_categorical(y_test, num_classes).astype(np.float32)
 
     # The capacity variable controls the maximum queue size
     # allowed when prefetching data for training.
@@ -228,6 +182,10 @@ def main(argv=None):
         #     min_after_dequeue=min_after_dequeue,
         #     enqueue_many=enqueue_many,
         #     num_threads=8)
+
+        # NOTE: This bakes the whole dataset into the TF graph and for larger
+        # datasets it fails on "ValueError: GraphDef cannot be larger than 2GB".
+        # TODO: Load the a large dataset via queue from RAM/disk.
 
         input_images = tf.constant(x_train.reshape(train_samples, -1))
         print('train_samples', train_samples)
@@ -286,7 +244,8 @@ def main(argv=None):
 
         x_test_batch, y_test_batch = tf.train.batch(
             [test_image, test_label],
-            batch_size=batch_size,
+            # TODO: shouldn't it be: batch_size=batch_size???
+            batch_size=train_samples,
             capacity=capacity,
             num_threads=8,
             name='test_batch',
@@ -307,8 +266,7 @@ def main(argv=None):
         tfsess = tf.Session(config=config)
         KB.set_session(tfsess)
 
-    model_init = make_model(x_train_input, num_classes,
-                            filepath if checkpt_flag else None)
+    model_init = make_model(x_train_input, num_classes)
     x_train_out = model_init.output
     # model_init.summary()
 

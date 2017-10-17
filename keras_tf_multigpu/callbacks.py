@@ -49,12 +49,15 @@ class BatchTiming(Callback):
             (median_batch_time, median_epoch_time))
 
 class SamplesPerSec(Callback):
+    def __init__(self, batch_size):
+        self.batch_size = batch_size
+
     def on_train_begin(self, logs={}):
         self.all_samples_per_sec = []
 
     def on_batch_begin(self, batch, logs={}):
         self.start_time = time.time()
-        self.batch_size = logs['size']
+        # self.batch_size = logs['size']
 
     def on_batch_end(self, batch, logs={}):
         end_time = time.time()

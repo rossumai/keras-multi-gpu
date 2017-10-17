@@ -32,7 +32,9 @@ from keras_tf_multigpu.avolkov1 import (
     make_parallel, get_available_gpus, print_mgpu_modelsummary)
 from keras_tf_multigpu.avolkov1.optimizers import RMSPropMGPU
 
-from .parser_common import parser_def_mgpu
+from parser_common import parser_def_mgpu
+
+from keras_tf_multigpu.callbacks import SamplesPerSec
 
 # from functools import partial
 
@@ -209,7 +211,7 @@ def main(argv=None):
     filepath = checkpt
     # print('CHECKPT:', checkpt)
 
-    batch_size = 32
+    batch_size = 512
     num_classes = 10
     epochs = args.epochs
     data_augmentation = args.aug
@@ -234,7 +236,7 @@ def main(argv=None):
     x_train /= 255
     x_test /= 255
 
-    callbacks = None
+    callbacks = []
 
     if _DEVPROF or logdevp:  # or True:
         # Setup Keras session using Tensorflow
@@ -255,7 +257,7 @@ def main(argv=None):
     if checkpt_flag:
         checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1,
                                      save_best_only=True, mode='max')
-        callbacks = [checkpoint]
+        callbacks += [checkpoint]
 
     lr = 0.0001
     if mgpu > 1 or mgpu == -1:
@@ -286,6 +288,9 @@ def main(argv=None):
 
         # initiate RMSprop optimizer
         opt = RMSprop(lr=lr, decay=1e-6)
+
+    gauge = SamplesPerSec(batch_size)
+    callbacks += [gauge]
 
     # Let's train the model using RMSprop
     model.compile(loss='categorical_crossentropy',
@@ -342,6 +347,8 @@ def main(argv=None):
                             epochs=epochs,
                             validation_data=(x_test, y_test),
                             callbacks=callbacks)
+
+    gauge.print_results()
 
 
 if __name__ == '__main__':
