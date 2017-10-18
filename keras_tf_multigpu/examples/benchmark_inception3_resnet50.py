@@ -52,7 +52,7 @@ def train(create_model, X, y, batch_size, epochs, gpu_count, parameter_server, m
     print('Number of parameters:', serial_model.count_params())
 
     model.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
-    gauge = SamplesPerSec()
+    gauge = SamplesPerSec(batch_size)
     model.fit(X, y, batch_size=batch_size, epochs=epochs, callbacks=[gauge])
     gauge.print_results()
 
