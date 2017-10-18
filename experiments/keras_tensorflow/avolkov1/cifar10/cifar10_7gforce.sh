@@ -1,5 +1,5 @@
 # ./cifar10_7gforce.sh 2>&1 | tee cifar10_7gforce_results.txt
-# grep '^Samples/sec:' cifar10_7gforce_results.txt > cifar10_7gforce_times.csv
+# grep '^Samples/sec:' cifar10_7gforce_results.txt |sed 's#Samples/sec: ##' > cifar10_7gforce_times.csv
 set -x
 
 CMD="python ../../../../keras_tf_multigpu/examples/avolkov1/cifar/cifar10_cnn_mgpu.py"
