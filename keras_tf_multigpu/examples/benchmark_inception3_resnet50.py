@@ -46,6 +46,10 @@ def train(create_model, X, y, batch_size, epochs, gpu_count, parameter_server, m
             from keras_tf_multigpu.avolkov1 import make_parallel, get_available_gpus
             gpus_list = get_available_gpus(gpu_count)
             model = make_parallel(serial_model, gdev_list=gpus_list, ps_device=ps_device)
+        elif method == 'fchollet':
+            # requires Keras (2.0.9?) https://github.com/fchollet/keras/commit/3dd3e8331677e68e7dec6ed4a1cbf16b7ef19f7f
+            from keras.utils import multi_gpu_model
+            model = multi_gpu_model(serial_model, gpus=gpu_count)
     else:
         model = serial_model = create_model()
 
@@ -61,7 +65,7 @@ def parse_args():
     parser.add_argument('-a', '--arch', required=True, help='Architecture (inception3, resnet50)')
     parser.add_argument('-g', '--gpus', default=1, type=int, help='Number of GPUs to use')
     parser.add_argument('-p', '--parameter-server', default='gpu', help='Parameter server device (cpu, gpu)')
-    parser.add_argument('-m', '--method', default='kuza55', help='Method of parallelization (kuza55, avolkov1)')
+    parser.add_argument('-m', '--method', default='kuza55', help='Method of parallelization (kuza55, avolkov1, fchollet)')
     parser.add_argument('-e', '--epochs', default=5, type=int, help='Number of epochs')
     # Note: batch_size == 64 with inception3 is too much for 8GB GPU RAM
     parser.add_argument('-b', '--batch-size', default=32, type=int, help='Batch size')
