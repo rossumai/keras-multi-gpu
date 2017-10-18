@@ -36,6 +36,10 @@ One cause might be TensorFlow dynamically optimizing the graph. Another cause is
 
 It would be good to quantify the warm-up period in time or number of epochs/batches. So far we just take measurements after roughly 5-10 epochs or compute median value. In `tf_cnn_benchmarks` the models are also warmed-up.
 
+### Results
+
+Our experiments and their results are stored in a big [spreadsheet](https://docs.google.com/spreadsheets/d/1c5yGydEANMzHjBufTzph0w-WGwJyiwPMRYz3yBZatb4/edit#gid=1598430941). In this article there is only a summary.
+
 ## TensorFlow Benchmarks
 
 ### What speedups are possible on non-trivial models?
@@ -134,17 +138,11 @@ Important result:
 
 > **Efficient multi-GPU training is possible on CIFAR10 dataset and on small CNN  models.**
 
-### How do our machines compare?
-
-Does it make sense to use a machine with multiple Pascal GTX cards instead of cloud instances?
-
-TODO: compare our measurements on 7gforece with 1070 and 1080, Azure with M60 and TensorFlow's own measurements on P100 and K80.
-
 ### Which data format NCHW vs. NHWC?
 
 TL;DR: Consistently better to use [NCHW on GPU (due to cuDNN)](https://www.tensorflow.org/performance/performance_guide#data_formats).
 
-On cifar10 and imagenet-synth datasets and various non-trivial models we observed that using NCHW data format gives speedup of +22% to +73%, typically around +25% on bigger imagenet-synth and +50% on smaller cifar10 (rounded median over multiple models). It doesn't depend on number of GPUs.
+On cifar10 and imagenet-synth datasets and various non-trivial models we observed that using NCHW data format gives speedup of +22% to +73%, typically around +25% on bigger imagenet-synth and +50% on smaller cifar10 (rounded median over multiple models). It doesn't have seem to have effect on scaling to multiple GPUs.
 
 ![nchw cifar10 tesla-m60](images/nchw_cifar10_tesla-m60.png)
 ![nchw imagenet tesla-m60](images/nchw_imagenet_tesla-m60.png)
@@ -209,19 +207,44 @@ az-2x-m60|GPU|1.29x
 7gforce|CPU|0.43x
 7gforce|GPU|0.65x
 
-Better would be to try it some more realistic model.
-
-### @kuza55 on CIFAR10
-
-TODO
+Better would be nice to try it some more realistic model. See more measurements on InceptionV3 and Resnet50.
 
 ### @avolkov on CIFAR10
 
 @avolkov provided an example of training a CIFAR10 model similar to one in Keras examples (a smaller convnet with 1.25M parameters).
 
+- [experiment script](https://github.com/rossumai/keras-multi-gpu/blob/master/keras_tf_multigpu/examples/avolkov1/cifar/cifar10_cnn_mgpu.py)
+- [runs and results](https://github.com/rossumai/keras-multi-gpu/tree/master/experiments/keras_tensorflow/avolkov1/cifar10)
+
 Originally there were measurement on too small batch sizes which gave bad scaling. When using much bigger batch sizes, it scaled much better, eg. 4x on 6 GPUs. In practice such large batch sizes could be possible used with high learning rate and warmup.
 
-TODO: results of a new measurement
+![keras avolkov1 cifar10 7gforce speedup](images/keras_avolkov1_cifar10_7gforce_speedup.png)
+
+| Speedup   | batch_size | batch_size | batch_size |
+|-----------|------------|------------|------------|
+| gpu count | 4096       | 512        | 32         |
+| 1         | 1.00x      | 1.00x      | 1.00x      |
+| 2         | 1.80x      | 1.75x      | 0.78x      |
+| 3         | 2.28x      | 2.04x      | 0.67x      |
+| 4         | 1.80x      | 1.49x      | 0.61x      |
+| 5         | 2.16x      | 1.87x      | 0.58x      |
+| 6         | 4.03x      | 1.76x      | 0.55x      |
+
+![keras avolkov1 cifar10 7gforce efficiency](images/keras_avolkov1_cifar10_7gforce_efficiency.png)
+
+| Efficiency | batch_size | batch_size | batch_size |
+|------------|------------|------------|------------|
+| gpu count  | 4096       | 512        | 32         |
+| 1          | 100.00%    | 100.00%    | 100.00%    |
+| 2          | 91.15%     | 87.69%     | 39.09%     |
+| 3          | 76.05%     | 68.04%     | 22.38%     |
+| 4          | 45.04%     | 37.37%     | 15.33%     |
+| 5          | 43.17%     | 37.43%     | 11.64%     |
+| 6          | 67.16%     | 29.26%     | 9.19%      |
+
+On 7gforce using GPUs we can get to 4x speedup at 67.16% efficiency. That's really not bad. But we have to use an extremely big batch size. For smaller batch sizes the scaling is very poor or harmful.
+
+In contrast tf_cnn_benchmarks achieve almost perfect scaling even on batch size 128. On 7gforce we observed speed up 1.841x on 2 GPUs and 3.510x on 6 GPUs.
 
 ### @avolkov1 and @kuza55 on InceptionV3/Resnet50 and synthetic ImageNet
 
@@ -231,9 +254,9 @@ We incorporated and adapted the code their code into [our benchmark repository](
 
 InceptionV3:
 
-| machine   | GPUs   | PS      | images/sec | speedup | efficiency | images/sec | speedup | efficiency |images/sec | speedup | efficiency |       |         |
+| machine   | GPUs   | PS      | images/sec | speedup | efficiency | images/sec | speedup | efficiency |images/sec | speedup | efficiency |
 |-----------|--------|---------|------------|----------|---------|------------|-------------------|---------|------------|-------|---------|
-|||| kuza55 | kuza55 | kuza55 | avolkov1 | avolkov1  | avolkov1 | tf_cnn_benchmarks | tf_cnn_benchmarks | tf_cnn_benchmarks |       |         |
+|||| kuza55 | kuza55 | kuza55 | avolkov1 | avolkov1  | avolkov1 | tf_cnn_benchmarks | tf_cnn_benchmarks | tf_cnn_benchmarks |
 | az-2x-m60 | 1      | GPU     | 31.71      | 1.00x    | 100.00% | 31.67      | 1.00x             | 100.00% | 47.49      | 1.00x | 100.00% |
 | az-2x-m60 | 2      | CPU     | 53.35      | 1.68x    | 84.12%  | 54.58      | 1.72x             | 86.17%  | 95.43      | 2.01x | 100.47% |
 | az-2x-m60 | 2      | GPU     | 53.33      | 1.68x    | 84.09%  | 53.20      | 1.68x             | 83.99%  | 94.72      | 1.99x | 99.73%  |
@@ -243,7 +266,7 @@ InceptionV3:
 | 7gforce   | 6      | CPU     | error      | N/A  | N/A | 65.37      | 1.59x             | 26.57%  | 351.98     | 4.49x | 74.79%  |
 | 7gforce   | 2      | GPU     | 57.15      | 1.46x    | 73.14%  | 55.57      | 1.36x             | 67.77%  | 126.68     | 1.61x | 80.75%  |
 | 7gforce   | 4      | GPU     | 33.00      | 0.84x    | 21.12%  | 32.23      | 0.79x             | 19.65%  | 180.92     | 2.31x | 57.66%  |
-| 7gforce   | 6      | GPU     | error      | N/A  | N/A | 21.33      | 0.52x             | 8.67%   | N/A        |       |         |
+| 7gforce   | 6      | GPU     | error      | N/A  | N/A | 21.33      | 0.52x             | 8.67%   | N/A        |  N/A | N/A   |
 
 Resnet50:
 
@@ -270,6 +293,7 @@ Observations:
     - in comparison, with tf_cnn_benchmarks efficiency stays at around 75 %
 - kuza55 fails on non-power-of-two number of GPUs
 - avolkov1 gave offen a little bit less speedup compared to kuza55
+- all in all both method give almost the same results, except that avolkov1 code is more developed
 - where is better to put PS? 2 GPUs: GPU, more than 2 GPUs: CPU
 
 Conclusions:
@@ -286,13 +310,12 @@ Question:
 | model      | machine   | gpu       | tf_cnn_benchmarks NCHW | tf_cnn_benchmarks NHWC | % of NCHW | kuza55 NHWC | % of NCHW | % of NHWC | avolkov1 NHWC | % of NCHW | % of NHWC |
 |------------|-----------|-----------|------------------------|------------------------|-----------|-------------|-----------|-----------|---------------|-----------|-----------|
 | inception3 | az-2x-m60 | Tesla M60 | 47.49                  | 38.92                  | 81.95%    | 31.71       | 66.77%    | 81.47%    | 31.67         | 66.69%    | 81.37%    |
-| inception3 | 7gforce   | GTX 1070  | 78.44                  |                        |           | 39.07       | 49.81%    |           | 41            | 52.27%    |           |
+| inception3 | 7gforce   | GTX 1070  | 78.44                  | 68.72                  | 87.61%    | 39.07       | 49.81%    | 56.85%    | 41            | 52.27%    | 59.66%    |
 | resnet50   | az-2x-m60 | Tesla M60 | 77.94                  | 60.21                  | 77.25%    | 41.69       | 53.49%    | 69.24%    | 41.64         | 53.43%    | 69.16%    |
 
+Keras multi-GPU models are at 50-67% speed of optimized tf_cnn_benchmarks models and at 50-80% of tf_cnn_benchmarks using the same NHWC data format.
 
-Keras multi-GPU models are at 50-67% speed of optimized tf_cnn_benchmarks models and at 70-80% of tf_cnn_benchmarks using the same NHWC data format.
-
-It means that there's an opportunity to get most speedup on the 1-GPU training by using NCHW data format, the rest probably by optimizing data transfers.
+It means that there's a big opportunity to get most speedup on the 1-GPU training by using NCHW data format, the rest probably by optimizing data transfers.
 
 #### Speedup of 1 GTX 1070 vs. Tesla M60
 
@@ -304,144 +327,8 @@ It means that there's an opportunity to get most speedup on the 1-GPU training b
 | resnet50   | kuza55            | NHWC        | 1.31x   |
 | resnet50   | avolkov1          | NHWC        | 1.40x   |
 
-GTX 1070 has 93.75% of cores and 160% of internal memory bandwidth compared to Tesla M60. It seems that `tf_cnn_benchmarks` are able to utilize this bandwidth. Existing Keras multi-GPU packages still achive some speedup at this card, but smaller.
-
-### @avolkov1 with TF queue - CIFAR10 / InceptionV3+ImageNet
-
-We were interested if feeding data using a TensorFlow queue instead od feed_dict helps. One example from @avolkov1 already uses TF queue. So we tried it on the original CIFAR10 example and also on InceptionV3+ImageNet-synth.
-
-TODO: table + image
-
-Observations:
-
-- for smaller model/dataset like CIFAR10 queue didn't help - maybe we should use GPU as PS
-- for larger model/dataset like InceptionV3/imagenet queue helped, but still it's not perfect
-- anyway we can obtain up to 2.7x speed up with 6 GPUs
-- in summary the queue seems to help, but needs some more work to tune better
+GTX 1070 has 93.75% of cores and 160% of internal memory bandwidth compared to Tesla M60 ([sheet](https://docs.google.com/spreadsheets/d/1pQNWTLfsBmclB3lojc5DHPZCRoKATjNqDA1Sbwq4zeE/edit#gid=0)). It seems that `tf_cnn_benchmarks` are able to utilize this bandwidth. Existing Keras multi-GPU packages still achive some speedup at this card, but smaller.
 
 ### @fcholet's new multi_gpu_model
 
-TODO
-
-### In future hopefully:
-
-- tensorpack
-- horovod
-
-----
-
-[Big sheet with measurments](https://docs.google.com/spreadsheets/d/1c5yGydEANMzHjBufTzph0w-WGwJyiwPMRYz3yBZatb4/edit)
-
-- questions
-    - how to speed-up long training for our models in Rossum?
-        - we have available either a 7gforce machine 6x GTX 1070 + 1x GTX 1080
-        - or azure 2x/4x Tesla M60
-    - would multi-GPU training help?
-    - which kind of parallelism to use?
-        - data parallelism
-    - is it possible to use 7gforce machine given it's low host-device bandwidth?
-    - what kind of models can benefit from data-parallelism?
-        - minimum size, minimum dataset size, ratio between conv/FC/RNN parameters?
-        - what are some good example models/datasets to try?
-    - how well does data-parallelism work in existing implementations (TensorFlow)?
-      - scaling factor, behavior of various options
-    - what are necessary steps to achieve scalable data-parallelism in Keras?
-    - what batch sizes to use?
-    - what learning rate to use?
-    - is the scaling problem with Keras/TensorFlow really in data feeding latency?
-      - try to put data as a constant on GPU and compute on multiple towers
-    - does TF Dataset API also use StagingArea under the hood?
-    - what's the cost of exchanging gradients/weights?
-    - how well does a data-parallel model converge?
-- what to measure:
-    - throughput (samples/sec) - used in TF benchmarks
-        - mean or possibly median over all batches
-    - time per epoch - too rough
-    - scaling of throughput (speed-up)
-        - `speedup_N = thoughput_N / thoughput_1`
-            - we want it to approach `N`
-    - percentage of real speed-up to ideally linear (normalized speedup)
-        - `speedup_percentage = 100 * speedup_N / N` (%)
-            - ideally we want it to approach 100%
-- warm-up
-    - it's observed that training is slow at the beginning and then after some warm-up period it stabilizes at much faster speed
-    - so we can ignore data from the warm-up period
-    - TODO: make a graph in time
-        - how to quantify the warm-up period - time, number of epochs/batches?
-- TensorBoard
-    - how are operations (especially gradients) distributed to devices?
-    - logging in TensorBoard format, opening the logs in the web app
-- nvprof
-    - allows to see timeline of low-level CUDA operations!
-    - we can see it to analyze the overhead of data transfers, eg. with sync feeding
-    - more useful information: compute utilization, bandwidth
-    - modes of operations:
-        - save the logs for GUI
-        - print summary stats of operations to stdout
-            - useful to see quickly if I/O dominates
-        - print all operations to stdout
-    - can be visualized in a Eclipse-based GUI
-    - logs can be big (100MB+), SQLite format
-    - needs libcupti
-    - possible/necessary to cut a small window while importing to the GUI
-    - would be nice to make a tool to analyze/preprocess the SQLite outside the GUI
-- TensorFlow profiler
-    - profiling at the level of TF operations
-    - needs libcupti
-        - a bit tricky to install on Ubuntu - we need to manually install a package from newer distribution version
-
-- meaasurement code:
-    - https://github.com/rossumai/keras-multi-gpu
-        - code from kuza55 and avolkov1 incorporated and adapted to a Python package structure for experiments
-
-## What is some good architecture and dataset to test scalable training?
-
-Architecture:
-
-- inception3
-- resnet50
-
-Datasets:
-
-- imagenet-synth
-- cifar10
-
-## What kind of variable update for multiple GPUs?
-
-- parameter server on CPU - consistently the best
-- parameter server on GPU - sometimes better for 2 GPUs
-- replicated
-- replicated with NCCL - faster than replicated for many GPUs
-
-## What data format: NCHW vs. NHWC?
-
-NCHW (channels_first) consistently faster (10-25 % in TensorFlow benchmarks).
-
-Data format doesn't have much effect on scaling - NCHW work better in any case.
-
-## Is 7gforce usable for multi-GPU training or do we have to use cloud instances?
-
-- 7gforce:
-  - best scaling: 4.487x
-    - 6 GPUs on inception3/imagenet-synth in tf_cnn_benchmarks
-  - least overhead: 80.75% of ideal scaling at 1.615x speed-up
-    - for 2 GPUs with on inception3/imagenet-synth in tf_cnn_benchmarks
-  - otherwise rather poor scaling
-- az-2x-m60:
-  - almost 2x scaling for 2 GPUs on inception3/imagenet-synth and many models on cifar10 in tf_cnn_benchmarks
-
-## Is gradient averaging necessary or can we just concat predictions?
-
-- TF performs gradient averaging
-- kuza55 just concatenates predictions + colocate_gradients_with_ops
-
-## How different architectures are suitable to data/model-parallelism?
-
-- dense layers
-- convolutional layers
-- recurrent layers
-
-## What properties of datasets make them suitable for parallel training?
-
-- size of images?
-- number of data samples?
+From the code inspection and first measurement it seems the performance is the same as for @kuza55 and @avolkov1. We need to make exact measurements.

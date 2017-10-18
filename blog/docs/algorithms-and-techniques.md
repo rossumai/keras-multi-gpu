@@ -78,37 +78,6 @@ Eg. for parameter server on CPU:
 - gradients aggregated and weights updated
 - weights to each GPU (host to device)
 
-### Asynchronous data feeding
-
-In a basic case in each batch we perform these steps:
-
-- copy mini-batch from CPU to GPU (data transfer)
-- compute gradients and update weights (compute)
-
-If we trivially run both kind of operations sequentially, it's obvious that while transfering data, computation cannot run and we underutilize the GPU. In case we have a lot of data and/or low bandwidth, data transfer time might dominate over the compute time.
-
-A solution to that is feeding the data asynchronously.
-
-- multiple CUDA streams - one for feeding, one for running CUDA kernels
-- there's a queue of batches being copied to the GPU buffer
-    - at least two batches (one being computed, one being copied)
-    - like double buffering in classic graphics rendering pipeline, except the direction of data is opposite
-    - computation takes data that's already present in GPU memory
-    - during computation another batch is being copied to the GPU memory
-- it requires that each batch can be prepared through the whole pipeline faster than the time for the computation
-
-#### TensorFlow queues
-
-- seems to perform only async feeding into TF memory on CPU
-
-#### StagingArea
-
-- seems to really implement a GPU-resident queue and can do double buffering
-
-#### Dataset API
-
-- ???
-
 ### Batch size / sub-batch size
 
 [As explained by Tim Dettmers](http://timdettmers.com/2014/10/09/deep-learning-data-parallelism/), in order not to waste GPU resources batch size for one GPU should an integer multiple of 32 and at least 64. When we use multiple GPUs we should keep the size of each sub-batch the same, thus the total mini-batch size can be computed as `batch_size = gpu_count * sub_batch_size`. For example for 2,4 or 8 GPUs we should have batch size of at least 128, 256 or 512 respectively. Too big batch size will result in out-of-memory error (OOM). Also we should make sure we can generate/provide data samples fast enough.
@@ -173,6 +142,63 @@ Ordering of dimensions in the data format for image data matters for GPU trainin
 
 cuDNN is optimized for NCHW, TensorFlow and Keras support both (`NHWC` is default in TF). In Keras it's possible to set it in [`keras.json`](https://keras.io/backend/#kerasjson-details) config file.
 
+### Asynchronous data feeding
+
+In a basic case in each batch we perform these steps:
+
+- copy mini-batch from CPU to GPU (data transfer)
+- compute gradients and update weights (compute)
+
+If we trivially run both kind of operations sequentially, it's obvious that while transfering data, computation cannot run and we underutilize the GPU. In case we have a lot of data and/or low bandwidth, data transfer time might dominate over the compute time.
+
+A solution to that is feeding the data asynchronously.
+
+- multiple CUDA streams - one for feeding, one for running CUDA kernels
+- there's a queue of batches being copied to the GPU buffer
+    - at least two batches (one being computed, one being copied)
+    - like double buffering in classic graphics rendering pipeline, except the direction of data is opposite
+    - computation takes data that's already present in GPU memory
+    - during computation another batch is being copied to the GPU memory
+- it requires that each batch can be prepared through the whole pipeline faster than the time for the computation
+
+#### TensorFlow queues
+
+- seems to perform only async feeding into TF memory on CPU
+- not implemented on GPU, thus cannot be used for async feeding to GPU
+- multi-threading in Python
+- now deprecated in favor of Dataset API
+
+#### Dataset API
+
+- https://www.tensorflow.org/programmers_guide/datasets
+- functional API like for Scala collection
+- seems also to perform only async feeding into TF memory on CPU
+- multi-threading in C++ instead of Python
+- intended to perform the whole input pipeline outside of Python
+- posible to use from Keras, but not easy to feed data directly from Python
+
+#### StagingArea
+
+- [tf.contrib.staging.StagingArea](https://www.tensorflow.org/api_docs/python/tf/contrib/staging/StagingArea)
+- seems to really implement a GPU-resident queue and can be used for double buffering
+- the idea is
+    - while one batch is being computed, another batch is copied to GPU memory in parallel
+    - if copy is faster then computation, then computation doesn't have to wait for copy and GPU can be utilized 100%
+
+How we could use it?
+
+- make a StagingArea at GPU with size 2 (for each GPU).
+- before epoch: put(batch)
+- at each batch, in single Session.run(): put() + train with get() as input
+- at last batch put() some dummy value or avoid put() at all
+- after epoch possibly clear()
+
+It means that the maximum batch size that fits the GPU is halved.
+
+In `tf_cnn_benchmarks` the usage is very cluttered. There are not many examples. Possibly one here:
+
+https://gist.github.com/suiyuan2009/99fb21567e7ce3716ae25772754c7543
+
 ## Conclusion
 
-For training our bigger convolutional network models we can utilize data-parallelism, ie. replicate the network over multiple GPUs and train on multiple mini-batches in parallel. The safest bet is to put the weights on cpu in parameter server mode. In this case we scatter a batch to GPUs, compute gradients, aggregate them, update weights and broadcast them. We should scale the batch size and learning date by number of GPUs. Input data has to be provided asynchronously through the pipeline, so that GPU computation does not wait. Data can be in for NCHW format to get bonus performance from cuDNN.
+For training our bigger convolutional network models we can utilize data-parallelism, ie. replicate the network over multiple GPUs and train on multiple mini-batches in parallel. The safest bet is to put the weights on CPU in parameter server mode. In this case we scatter a batch to GPUs, compute gradients, aggregate them, update weights and broadcast them. We should scale the batch size and learning date by number of GPUs. Input data has to be provided asynchronously through the pipeline, so that GPU computation does not wait. Data can be in for NCHW format to get bonus performance from cuDNN. Weights/gradients can be exchanged via implicit copy.

@@ -14,9 +14,10 @@ Resources:
   - [Benchmarks](https://www.tensorflow.org/performance/benchmarks)
     - [tf_cnn_benchmarks.py]( https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py)
       - multiple options: PS at CPU/GPU, replicated, +NCCL, distributed, etc.
-      - uses StagingArea instead of TF queues or Dataset API
+      - uses StagingArea
+      - it's a very imporant resource for us
 
-#### How it works?
+#### How does it work?
 
 TensorFlow allows to place operation (nodes of the computational graph) to be placed on differnet available devices, either automatically or manually.
 

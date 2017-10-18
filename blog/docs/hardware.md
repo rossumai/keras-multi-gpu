@@ -295,7 +295,3 @@ Comparison:
 
 - host <-> device bandwidth for the 1080 GPU in 7gforce and M60 GPUs in Azure machine is comparable
 - device to device bandwidth for 7gforce GPUs is M60 is 1.5-2.0 higher
-
-## Conclusion
-
-TODO
