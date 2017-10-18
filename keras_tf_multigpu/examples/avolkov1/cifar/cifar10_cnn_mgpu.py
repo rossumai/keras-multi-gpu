@@ -60,6 +60,7 @@ def parser_(desc):
 
     parser.add_argument('--datadir', default=SUPPRESS,
                         help='Data directory with Cifar10 dataset.')
+    parser.add_argument('--batch-size', default=32, type=int)
 
     args = parser.parse_args()
 
@@ -211,7 +212,7 @@ def main(argv=None):
     filepath = checkpt
     # print('CHECKPT:', checkpt)
 
-    batch_size = 512
+    batch_size = args.batch_size
     num_classes = 10
     epochs = args.epochs
     data_augmentation = args.aug
