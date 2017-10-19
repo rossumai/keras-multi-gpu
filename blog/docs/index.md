@@ -30,6 +30,11 @@ We limit the scope of this effort to training on single machine with multiple co
 
 Since the whole topic is a bit complex the main story is outlined in this article and details have been extracted into several separate articles. First we review existing algorithms a techniques, then existing implementations of multi-GPU training in common deep learning frameworks. We need to consider hardware since the performance heavily depends on it. To get intuition on what techniques are working well and how we perform and evaluate various measurements of existing implementations. For that we figure out what architectures and datasets are suitable for benchmarking. Then we finally review and measure existing approaches of multi-GPU training specifically in Keras + TensorFlow and indicate their problems. Finally we suggest which techniques might help.
 
+In addition there's:
+
+- [code repository](https://github.com/rossumai/keras-multi-gpu)
+- [big spreadsheet with measurements ](https://docs.google.com/spreadsheets/d/1c5yGydEANMzHjBufTzph0w-WGwJyiwPMRYz3yBZatb4/edit#gid=0)
+
 ### Let's dive in:
 
 - [Algorithms and techniques](algorithms-and-techniques.md)
