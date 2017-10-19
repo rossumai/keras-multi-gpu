@@ -56,8 +56,14 @@ Possible to use some newly published packages at the expense of more complicated
 Since we had a limited time for the experiments and the contributions in open-source appear every day there's much more to try.
 
 - try NCHW data format with Keras
+- try to isolate the source of slow down
+    - transfering input data
+    - transfering output data
+    - transfering gradients
+    - transfering weights
 - try using StagingArea properly (as a double buffer)
 - try using TF queues properly
+- examine again if proper gradient averaging might be really necessary
 - profile with nvprof both tf_cnn_benchmarks and Keras models
     - visualize in NVIDIA Visual Profiler
     - look for places where computation waits for communication

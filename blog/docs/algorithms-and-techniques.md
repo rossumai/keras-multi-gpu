@@ -120,6 +120,38 @@ When the weights are placed on GPU and then distributed to other GPUs in the wor
 
 It's recommended to try both options and measure what's better for particular model architecture or hardware.
 
+### A back-of-the-envelope calculation...
+
+Let's get some some intuition on the data sizes and times.
+
+In case of PS at CPU the transfers for one batch look like:
+
+- copy input data to GPU: `input_bytes = batch_size * width * height * channels * bytes_per_float32`
+- compute gradient at GPU
+- copy gradient from GPU to CPU: `gradient_bytes = param_count * bytes_per_float32`
+- update weights at CPU
+- copy weights from CPU to GPU: `weights_bytes = param_count * bytes_per_float32`
+
+Input batches:
+
+| dataset                           | image H/W | channels | classes | sample bytes | sample MB | batch size | batch bytes | batch MB |  transfer time (ms) at rate (MB/s)||
+|-----------------------------------|-----------|----------|---------|--------------|-----------|------------|-------------|----------|---------|---------|----------|
+|             |             |           |       | PCIe x1: 750                       | PCIe x8: 6144 | PCIe x16: 12288 |
+| cifar10                           | 32        | 3        | 10      | 12328        | 0.01      | 512        | 6311936     | 6.02     | 8.03    | 0.98    | 0.49     |  
+| imagenet for inception3           | 299       | 3        | 1000    | 1076812      | 1.03      | 32         | 34457984    | 32.86    | 43.82   | 5.35    | 2.67     |  
+| imagenet for resnet50             | 224       | 3        | 1000    | 606112       | 0.58      | 32         | 19395584    | 18.50    | 24.66   | 3.01    | 1.51     |  
+
+Weights/gradients:
+
+| model       | param count | bytes   | MB  |  transfer time (ms) at rate (MB/s) |               |                 |
+|-------------|-------------|-----------|-------|------------------------------------|---------------|-----------------|
+|             |             |           |       | PCIe x1: 750                       | PCIe x8: 6144 | PCIe x16: 12288 |
+| cifar10 CNN | 1250000     | 5000000   | 4.77  | 6.36                               | 0.78          | 0.39            |
+| inception3  | 23851784    | 95407136  | 90.99 | 121.32                             | 14.81         | 7.40            |
+| resnet50    | 25636712    | 102546848 | 97.80 | 130.40                             | 15.92         | 7.96            |
+
+More calculations can be found in the [sheet](https://docs.google.com/spreadsheets/d/1c5yGydEANMzHjBufTzph0w-WGwJyiwPMRYz3yBZatb4/edit#gid=1075585150).
+
 ### How to perform data transfers?
 
 No matter if we use parameter server or replicated mode, we have to transfer gradients and possibly weights. There are two options:

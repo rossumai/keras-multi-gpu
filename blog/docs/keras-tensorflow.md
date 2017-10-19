@@ -23,7 +23,7 @@ In this simple illustration example the global mini-batch is not actually scatte
 Several issues appeared in Keras repo addressing the need for multi-GPU training:
 
 - [Does Keras support using multiple GPUs? #2436](https://github.com/fchollet/keras/issues/2436) (April 2016)
-- [Multi-GPU support for Tensorflow Backend(https://github.com/fchollet/keras/issues/3331) (July 2016)
+- [Multi-GPU support for Tensorflow Backend](https://github.com/fchollet/keras/issues/3331) (July 2016)
 - [[WIP] Correct data-parallel SGD implementation in Keras #7515](https://github.com/fchollet/keras/issues/7515) (August 2017)
 - [Data parallelism with multiple GPUs with fit_generator #7698](https://github.com/fchollet/keras/issues/7698) (August 2017)
 - [@fchollet added his cleaned variant to Keras repo](https://twitter.com/fchollet/status/918205049225936896)(October 2017)
@@ -60,7 +60,7 @@ To my surprise in Keras 2.0.7 with "Improve TensorBoard UX with better grouping 
 
 In the meanwhile Keras+MXNet and Keras+CNTK appeared which showed almost ideal scaling. Also `avolkov1` repository appeared which claimed to support TF queues and NCCL and users were reporting good scaling.
 
-From examining kuza55 closely via `nvprof` profiler it could be seen that the computation is waiting for data most of the time. Thus either the machine has low bandwidth or we need asyncrhronous data feeding or both.
+From examining kuza55 closely via `nvprof` profiler it could be seen that the computation is waiting for data most of the time. Thus either the machine has low bandwidth or we probably need asynchronous data feeding or both.
 
 ### Synchronous data feeding
 
@@ -101,10 +101,8 @@ As for StagingArea in this code it just put and gets a batch to/from StagingArea
 
 ### @fcholet's variant of @kuza55 script in keras.utils.training_utils.multi_gpu_model()
 
-2017-10-13:
-
-- https://twitter.com/fchollet/status/918205049225936896
-- https://github.com/fchollet/keras/blob/3dd3e8331677e68e7dec6ed4a1cbf16b7ef19f7f/keras/utils/training_utils.py#L56-L75
+- [Twitter announcement](https://twitter.com/fchollet/status/918205049225936896) - 2017-10-13
+- [commit]( https://github.com/fchollet/keras/blob/3dd3e8331677e68e7dec6ed4a1cbf16b7ef19f7f/keras/utils/training_utils.py#L56-L75)
 
 - nicely refactored version of kuza55
 - devices are explored via TF device_lib, instead of CUDA_VISIBLE_DEVICES
@@ -116,20 +114,20 @@ As for StagingArea in this code it just put and gets a batch to/from StagingArea
 
 Recently there appeared some interesting alternatives...
 
-- https://github.com/uber/horovod/
-- 2017-10-05, @alsrgv:
+- [github.com/uber/horovod](https://github.com/uber/horovod/)
+- recommended on 2017-10-05 by @alsrgv in Keras issues
 - Uber's alternative to TensorFlow distibuted
 - build on MPI
 - claims great speedup
-- Keras example: https://github.com/uber/horovod/blob/master/examples/keras_mnist.py
+- Keras example: [keras_mnist.py]( https://github.com/uber/horovod/blob/master/examples/keras_mnist.py)
 - PyPI package + needs MPI and NCCL
 
 ### TensorPack
 
-- https://github.com/ppwwyyxx/tensorpack
+- [github.com/ppwwyyxx/tensorpack](https://github.com/ppwwyyxx/tensorpack)
 - a thorough input pipeline for TensorFlow, also supporting Keras
 - supports multi-GPU training with qeues and StagingArea
-- claim great speedup
+- claims great speedup
 - [awesome documentation with a lot of wisdom](http://tensorpack.readthedocs.io/en/latest/tutorial/input-source.html)
 - a bit more complited API
 - probably not on PyPI yet

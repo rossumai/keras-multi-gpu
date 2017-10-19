@@ -36,6 +36,21 @@ One cause might be TensorFlow dynamically optimizing the graph. Another cause is
 
 It would be good to quantify the warm-up period in time or number of epochs/batches. So far we just take measurements after roughly 5-10 epochs or compute median value. In `tf_cnn_benchmarks` the models are also warmed-up.
 
+### Our code repository
+
+[github.com/rossumai/keras-multi-gpu](https://github.com/rossumai/keras-multi-gpu)
+
+- packaged kuza55 and avolkov1 make_parallel() functions
+- examples using InceptionV3 and Resnet50
+- code for synthesizing a dataset of shape of CIFAR10 or ImageNet
+- SamplesPerSec callback for measuring throughput in batches
+- code for easy benchmarking kuza55, avolkov1 and fchollet multi-gpu models
+- experimental code with avolkov1 multi-gpu and TF queues with CIFAR10 CNN and InceptionV3/ImageNet
+- run scripts and measurement results for both tf_cnn_benchmarks and Keras benchmarks
+- code for measuring GPU bandwidth with results
+- the blog article content
+- some preliminary experiments with [using of StagingArea API with Keras](https://gist.github.com/bzamecnik/f763d6b6d25dce571ddd6dcc3129daf3)
+
 ### Results
 
 Our experiments and their results are stored in a big [spreadsheet](https://docs.google.com/spreadsheets/d/1c5yGydEANMzHjBufTzph0w-WGwJyiwPMRYz3yBZatb4/edit#gid=1598430941). In this article there is only a summary.
@@ -252,7 +267,7 @@ In order to compare with `tf_cnn_benchmarks` on more realistic models/datasets, 
 
 We incorporated and adapted the code their code into [our benchmark repository](https://github.com/rossumai/keras-multi-gpu/tree/master/keras_tf_multigpu), so that it can be easily used via imports, parameterized and measured. We reused the existing InceptionV3/Resnet50 model definitions from `keras.applications` and made [code to synthesize random dataset](https://github.com/rossumai/keras-multi-gpu/blob/master/keras_tf_multigpu/examples/datasets.py) in the shape of ImageNet. The resulting benchmark script is [benchmark_inception3_resnet50.py](https://github.com/rossumai/keras-multi-gpu/blob/master/keras_tf_multigpu/examples/benchmark_inception3_resnet50.py). For both we use batch size 32, as more doesn't fit within 8 GB of GPU memory. No NCCL.
 
-InceptionV3:
+InceptionV3 with images of size 299^2:
 
 | machine   | GPUs   | PS      | images/sec | speedup | efficiency | images/sec | speedup | efficiency |images/sec | speedup | efficiency |
 |-----------|--------|---------|------------|----------|---------|------------|-------------------|---------|------------|-------|---------|
@@ -268,7 +283,7 @@ InceptionV3:
 | 7gforce   | 4      | GPU     | 33.00      | 0.84x    | 21.12%  | 32.23      | 0.79x             | 19.65%  | 180.92     | 2.31x | 57.66%  |
 | 7gforce   | 6      | GPU     | error      | N/A  | N/A | 21.33      | 0.52x             | 8.67%   | N/A        |  N/A | N/A   |
 
-Resnet50:
+Resnet50 with images of size 224^2:
 
 | machine   | GPUs   | PS      | images/sec | speedup | efficiency | images/sec | speedup | efficiency |
 |-----------|--------|---------|------------|----------|---------|------------|-------------------|---------|

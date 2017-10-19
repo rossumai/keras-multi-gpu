@@ -5,17 +5,17 @@
 Resources:
 
 - [Tuturial - Convolutional Neural Networks - Training a Model Using Multiple GPU Cards]( https://www.tensorflow.org/tutorials/deep_cnn#training_a_model_using_multiple_gpu_cards)
-  - parameter server at CPU
-  - [cifar10_multi_gpu_train.py]( https://github.com/tensorflow/models/blob/master/tutorials/image/cifar10/cifar10_multi_gpu_train.py)
+    - parameter server at CPU
+    - [cifar10_multi_gpu_train.py]( https://github.com/tensorflow/models/blob/master/tutorials/image/cifar10/cifar10_multi_gpu_train.py)
 - Performance tuning:
-  - [Performance Guide](https://www.tensorflow.org/performance/performance_guide)
-    - [example on CIFAR10](https://github.com/tensorflow/models/tree/master/tutorials/image/cifar10_estimator)
-  - [High-Performance Models](https://www.tensorflow.org/performance/performance_models)
-  - [Benchmarks](https://www.tensorflow.org/performance/benchmarks)
+    - [Performance Guide](https://www.tensorflow.org/performance/performance_guide)
+      - [example on CIFAR10](https://github.com/tensorflow/models/tree/master/tutorials/image/cifar10_estimator)
+      - [High-Performance Models](https://www.tensorflow.org/performance/performance_models)
+- [Benchmarks](https://www.tensorflow.org/performance/benchmarks)
     - [tf_cnn_benchmarks.py]( https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py)
-      - multiple options: PS at CPU/GPU, replicated, +NCCL, distributed, etc.
-      - uses StagingArea
-      - it's a very imporant resource for us
+        - multiple options: PS at CPU/GPU, replicated, +NCCL, distributed, etc.
+        - uses StagingArea
+        - it's a very imporant resource for us
 
 #### How does it work?
 

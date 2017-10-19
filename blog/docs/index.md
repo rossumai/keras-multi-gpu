@@ -2,7 +2,7 @@
 
 The big message:
 
-Multi-GPU data-parallel training in Keras over TensorFlow is with some hacks possible at the moment, but not too efficient. So we provide an in-depth analysis of the problem and existing solutions, and suggest what to do to make it more effcient.
+Multi-GPU data-parallel training in Keras over TensorFlow is possible at the moment, but not too efficient. So we provide an in-depth analysis of the problem and existing solutions, and suggest what to do to make it more effcient.
 
 ## Introduction
 
@@ -29,4 +29,4 @@ Since the whole topic is a bit complex the main story is outlined in this articl
 - [Other implementations](other-implementations.md)
 - [Implementations in Keras over TensorFlow](keras-tensorflow.md)
 - [Measurements](measurements.md)
-- [Suggestions how to improve & Conclusion](conclusion.md)
+- [Conclusion and suggestions how to improve](conclusion.md)
