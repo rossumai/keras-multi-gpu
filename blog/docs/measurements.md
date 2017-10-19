@@ -153,6 +153,12 @@ Important result:
 
 > **Efficient multi-GPU training is possible on CIFAR10 dataset and on small CNN  models.**
 
+### InceptionV3 and ResNet50
+
+https://docs.google.com/spreadsheets/d/1c5yGydEANMzHjBufTzph0w-WGwJyiwPMRYz3yBZatb4/edit#gid=0
+
+On az-2x-m60 we can see perfect scaling to 2 GPUs. On 7gforce we can get up to 4.774x speedup (79% efficiency) with 6 GPUs or 3x speedup at similar efficiency with 4 GPUs. Best results are with PS=CPU. Efficiency with multiple GPUs on 7gforce stays around 75-80 %.
+
 ### Which data format NCHW vs. NHWC?
 
 TL;DR: Consistently better to use [NCHW on GPU (due to cuDNN)](https://www.tensorflow.org/performance/performance_guide#data_formats).
@@ -319,6 +325,8 @@ Question:
 
 - Why this kind of model/dataset combination failed on 7gforce?
     - Because of bigger samples or more model parameters?
+
+`tf_cnn_benchmarks` differ from our Keras experiments by using StagingArea and TF queue to prefect input data. Still they have to exchange weights and gradients. Altough tf_cnn_benchmarks allow staged weights (essentially pipelining also in these data transfers at the cost of going away from the pure SGD algorithm), we didn't use that. So it makes sense to try to focus on data feeding.
 
 #### Comparing 1-GPU speed with tf_cnn_benchmarks
 
