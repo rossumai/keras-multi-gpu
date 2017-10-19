@@ -1,10 +1,14 @@
 # Towards efficient multi-GPU training in Keras over TensorFlow
 
-The big message:
+_A summary blog post for publishing on Medium and additional resources on GitHub (Markdown documents)._
 
-Multi-GPU data-parallel training in Keras over TensorFlow is possible at the moment, but not too efficient. So we provide an in-depth analysis of the problem and existing solutions, and suggest what to do to make it more effcient.
+## TL;DR
+
+Multi-GPU data-parallel training in Keras over TensorFlow is already possible, but not too efficient. There exist new packages that claim better efficiency at the cost of a bit more complicated API or installation. We provide a survey of the problem and existing solutions and suggest what to do to make it more effcient without using external libraries.
 
 ## Introduction
+
+In this blog article there's just a quick summary and more details and code are provided in our [GitHub repository](https://github.com/rossumai/keras-multi-gpu/tree/master/blog/docs).
 
 ### Why?
 
@@ -24,9 +28,27 @@ We limit the scope of this effort to training on single machine with multiple co
 
 Since the whole topic is a bit complex the main story is outlined in this article and details have been extracted into several separate articles. First we review existing algorithms a techniques, then existing implementations of multi-GPU training in common deep learning frameworks. We need to consider hardware since the performance heavily depends on it. To get intuition on what techniques are working well and how we perform and evaluate various measurements of existing implementations. For that we figure out what architectures and datasets are suitable for benchmarking. Then we finally review and measure existing approaches of multi-GPU training specifically in Keras + TensorFlow and indicate their problems. Finally we suggest which techniques might help.
 
+### Let's dive in:
+
 - [Algorithms and techniques](algorithms-and-techniques.md)
 - [Hardware](hardware.md)
 - [Other implementations](other-implementations.md)
 - [Implementations in Keras over TensorFlow](keras-tensorflow.md)
 - [Measurements](measurements.md)
 - [Conclusion and suggestions how to improve](conclusion.md)
+
+### Short conclusion:
+
+- currently multi-gpu training is already possible in Keras
+    - various third-party scripts + now in upstream (upcoming 2.0.9)
+    - it runs, it able to get some speed-up, but not as high as possible
+- also there are some third-party packages (horovod, tensorpack)
+    - both claim good speed-up
+    - little bit more complicated API/installation
+- good speed-up with plain TensorFlow is possible but complicated
+    - this is the goal
+- ideally we'd like good speed-up with simple API
+    - existing Keras multi-gpu code with some imporovements:
+        - double-buffering of batches at GPU using StagingArea
+        - providing data to TF memory asynchronously - using TF queues or Dataset API
+- also we provided some code to help with making benchmarks of multi-GPU training with Keras
