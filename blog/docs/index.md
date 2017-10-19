@@ -2,6 +2,8 @@
 
 _A summary blog post for publishing on Medium and additional resources on GitHub (Markdown documents)._
 
+Bohumír Zámečník, [Rossum AI](https://rossum.ai/), 2017-10-19
+
 ## TL;DR
 
 Multi-GPU data-parallel training in Keras over TensorFlow is already possible, but not too efficient. There exist new packages that claim better efficiency at the cost of a bit more complicated API or installation. We provide a survey of the problem and existing solutions and suggest what to do to make it more effcient without using external libraries.
