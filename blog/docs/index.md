@@ -35,7 +35,7 @@ In addition there's:
 - [code repository](https://github.com/rossumai/keras-multi-gpu)
 - [big spreadsheet with measurements ](https://docs.google.com/spreadsheets/d/1c5yGydEANMzHjBufTzph0w-WGwJyiwPMRYz3yBZatb4/edit#gid=0)
 
-### Let's dive in:
+### Let's dive in
 
 - [Algorithms and techniques](algorithms-and-techniques.md)
 - [Hardware](hardware.md)
@@ -44,18 +44,14 @@ In addition there's:
 - [Measurements](measurements.md)
 - [Conclusion and suggestions how to improve](conclusion.md)
 
-### Short conclusion:
+### Short conclusion
 
-- currently multi-gpu training is already possible in Keras
-    - various third-party scripts + now in upstream (upcoming 2.0.9)
-    - it runs, it able to get some speed-up, but not as high as possible
-- also there are some third-party packages (horovod, tensorpack)
-    - both claim good speed-up
-    - little bit more complicated API/installation
-- good speed-up with plain TensorFlow is possible but complicated
-    - this is the goal
-- ideally we'd like good speed-up with simple API
-    - existing Keras multi-gpu code with some imporovements:
-        - double-buffering of batches at GPU using StagingArea
-        - providing data to TF memory asynchronously - using TF queues or Dataset API
-- also we provided some code to help with making benchmarks of multi-GPU training with Keras
+Currently multi-gpu training is already possible in Keras. Besides various third-party scripts for making a data-parallel model there's already [a implementations in the main repo](https://github.com/fchollet/keras/blob/3dd3e8331677e68e7dec6ed4a1cbf16b7ef19f7f/keras/utils/training_utils.py#L56-L75) (to be released in 2.0.9). From our experiments we see it's runnable and it's able to provide some speed-up but not as high as possible (eg. compared to TensorFlow benchmarks).
+
+Also there are some recently released third-party packages like [horovod](https://github.com/uber/horovod) or [tensorpack](https://github.com/tensorpack) that support data-parallel training with TensorFlow and Keras. Both claim good speed-up (so far we weren't able to measure them) and the cost of a little bit more complicated API or installation.
+
+From measuring TensorFlow benchmarks ([tf_cnn_benchmarks](https://github.com/tensorflow/benchmarks/tree/master/scripts/tf_cnn_benchmarks)) we can see that good speed-up with plain TensorFlow is possible but rather complicated. They key ingredients seem to be asynchronous data feeding to from CPU to GPU using StagingArea and to TF memory (either from Python memory using TF queues or from disk).
+
+Ideally we'd like good speed-up with simple Keras-style API and without relying on external libraries other than Keras and TensorFlow themselves. In particular we need to correcly implement pipelining (at least double-buffering) of batches at GPU using StagingArea and if necessary also providing data to TF memory asynchronously (using TF queues or Dataset API). It should be verified with nvprof.
+
+Along with this article [we provided some code](https://github.com/rossumai/keras-multi-gpu) to help with making benchmarks of multi-GPU training with Keras.
