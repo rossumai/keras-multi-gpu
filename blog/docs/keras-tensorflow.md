@@ -62,21 +62,6 @@ In the meanwhile Keras+MXNet and Keras+CNTK appeared which showed almost ideal s
 
 From examining kuza55 closely via `nvprof` profiler it could be seen that the computation is waiting for data most of the time. Thus either the machine has low bandwidth or we probably need asynchronous data feeding or both.
 
-### Synchronous data feeding
-
-Unfortunately this is exactly how [Keras over TensorFlow feeds the data](https://github.com/fchollet/keras/blob/2.0.8/keras/backend/tensorflow_backend.py#L2272) in it's default implementation: it passes data via `feed_dict` argument of [`session.run()`](https://www.tensorflow.org/api_docs/python/tf/Session#run).
-
-```
-# keras.backend.tensorflow.Function.__call__():
-updated = session.run(self.outputs + [self.updates_op],
-                              feed_dict=feed_dict,
-                              **self.session_kwargs)
-```
-
-This is exactly what's not recommended for in the TF high-performance guide.
-
-What happens under the hood? Data from numpy array in Python memory is first copied to TensorFlow memory, then transferred to GPU (host-device memcpy) and then the computation can begin.
-
 ### @avolkov1 make_parallel()
 
 In the meanwhile appeared another repository [avolkov1/keras_experiments](https://github.com/avolkov1/keras_experiments) with improved `make_parallel()` function which claims to support even NCCL, some examples using TF queue and even distributed training.
@@ -98,6 +83,35 @@ As for StagingArea in this code it just put and gets a batch to/from StagingArea
 - then at each iteration of the epoch we make in parallel:
     - put next batch to StagingArea
     - get batch from that's already in StagingArea and train on it
+
+### Synchronous data feeding
+
+Unfortunately this is exactly how [Keras over TensorFlow feeds the data](https://github.com/fchollet/keras/blob/2.0.8/keras/backend/tensorflow_backend.py#L2272) in it's default implementation: it passes data via `feed_dict` argument of [`session.run()`](https://www.tensorflow.org/api_docs/python/tf/Session#run).
+
+```
+# keras.backend.tensorflow.Function.__call__():
+updated = session.run(self.outputs + [self.updates_op],
+                              feed_dict=feed_dict,
+                              **self.session_kwargs)
+```
+
+This is exactly what's not recommended for in the TF high-performance guide.
+
+What happens under the hood? Data from numpy array in Python memory is first copied to TensorFlow memory, then transferred to GPU (host-device memcpy) and then the computation can begin.
+
+#### Timeline from nvprof
+
+Let's try to run a CIFAR10 training script via @avolkov make_parallel() function on one and two GPUS at 7gforce and visualize the timeline on a single batch in NVIDIA Visual Profiler (NVVP).
+
+For one GPU we can see there's a gap the the beginning on the batch. Probably it's caused by loading data from Python to TensorFlow memory synchronously (via `feed_dict`). This could be avoided by using either TF queues or possibly the Dataset API. Then we can see a memcpy of input data from CPU to GPU. Also this operation is synchronous. Computation can start only afterwards. This could be made asynchronous by using StagingArea. NVVP shows low compute utilization: 64,9 %.
+
+![nvprof_cifar10_keras_7gforce_1_gpu](images/nvprof_cifar10_keras_7gforce_1_gpu.png)
+
+For 2 GPUs with PS=GPU we can see the same initial gap and syncrhonous memcpy of inputs. A bit surprising is that the peer-to-peer memcpy (exchanging weights and gradients) is performed asynchronously in parallel to the computations. We expected this to be performed sequentially. Is it possible this shows a bug in the weight sharing?
+
+![nvprof_cifar10_keras_7gforce_2_gpu](images/nvprof_cifar10_keras_7gforce_2_gpu.png)
+
+![nvprof_cifar10_keras_7gforce_4_gpu](images/nvprof_cifar10_keras_7gforce_4_gpu.png)
 
 ### @fcholet's variant of @kuza55 script in keras.utils.training_utils.multi_gpu_model()
 
