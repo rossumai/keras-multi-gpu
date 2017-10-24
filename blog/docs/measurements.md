@@ -155,9 +155,41 @@ Important result:
 
 ### InceptionV3 and ResNet50
 
-https://docs.google.com/spreadsheets/d/1c5yGydEANMzHjBufTzph0w-WGwJyiwPMRYz3yBZatb4/edit#gid=0
+Let's try non trivial convolutional models with around 25M parameters on synthetic imagenet dataset.
 
-On az-2x-m60 we can see perfect scaling to 2 GPUs. On 7gforce we can get up to 4.774x speedup (79% efficiency) with 6 GPUs or 3x speedup at similar efficiency with 4 GPUs. Best results are with PS=CPU. Efficiency with multiple GPUs on 7gforce stays around 75-80 %.
+On az-2x-m60 we can see perfect scaling to 2 GPUs. On 7gforce we can get up to 4.774x speedup (at 79% efficiency) with 6 GPUs or 3x speedup at similar efficiency with 4 GPUs. Best results are with PS=CPU. Efficiency with multiple GPUs on 7gforce stays around 75-80 %. Note that 6x GTX 1070 even with a poor PCIe connections are still running 7.3x faster than 1x Tesla M60.
+
+PS=CPU, data format = NCHW.
+
+#### InceptionV3
+
+| machine   | GPUs | model      | images/sec | speedup | efficiency |
+|-----------|------|------------|------------|---------|------------|
+| az-2x-m60 | 1    | inception3 | 47.49      | 1.00x   | 100.00%    |
+| az-2x-m60 | 2    | inception3 | 95.43      | 2.01x   | 100.47%    |
+| 7gforce   | 1    | inception3 | 78.44      | 1.00x   | 100.00%    |
+| 7gforce   | 2    | inception3 | 118.32     | 1.51x   | 75.42%     |
+| 7gforce   | 4    | inception3 | 236.86     | 3.02x   | 75.49%     |
+| 7gforce   | 6    | inception3 | 351.98     | 4.49x   | 74.79%     |
+
+![tf_cnn_benchmark_inception3_speedup](images/tf_cnn_benchmark_inception3_speedup.png)
+![tf_cnn_benchmark_inception3_efficiency](images/tf_cnn_benchmark_inception3_efficiency.png)
+
+#### ResNet50
+
+| machine   | GPUs | model      | images/sec | speedup | efficiency |
+|-----------|------|------------|------------|---------|------------|
+| az-2x-m60 | 1    | resnet50   | 77.94      | 1.00x   | 100.00%    |
+| az-2x-m60 | 2    | resnet50   | 151.65     | 1.95x   | 97.29%     |
+| 7gforce   | 1    | resnet50   | 119.8      | 1.00x   | 100.00%    |
+| 7gforce   | 2    | resnet50   | 196        | 1.64x   | 81.80%     |
+| 7gforce   | 4    | resnet50   | 364.32     | 3.04x   | 76.03%     |
+| 7gforce   | 6    | resnet50   | 571.9      | 4.77x   | 79.56%     |
+
+![tf_cnn_benchmark_resnet50_speedup](images/tf_cnn_benchmark_resnet50_speedup.png)
+![tf_cnn_benchmark_resnet50_efficiency](images/tf_cnn_benchmark_resnet50_efficiency.png)
+
+More details: https://docs.google.com/spreadsheets/d/1c5yGydEANMzHjBufTzph0w-WGwJyiwPMRYz3yBZatb4/edit#gid=0
 
 ### Which data format NCHW vs. NHWC?
 
