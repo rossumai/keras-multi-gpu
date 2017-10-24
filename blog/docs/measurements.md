@@ -307,6 +307,11 @@ We incorporated and adapted the code their code into [our benchmark repository](
 
 InceptionV3 with images of size 299^2:
 
+![comparison_inception3_7gforce_speedup](images/comparison_inception3_7gforce_speedup.png)
+![comparison_inception3_az-2x-m60_speedup](images/comparison_inception3_az-2x-m60_speedup.png)
+![comparison_inception3_7gforce_efficiency](images/comparison_inception3_7gforce_efficiency.png)
+![comparison_inception3_az-2x-m60_efficiency](images/comparison_inception3_az-2x-m60_efficiency.png)
+
 | machine   | GPUs   | PS      | images/sec | speedup | efficiency | images/sec | speedup | efficiency |images/sec | speedup | efficiency |
 |-----------|--------|---------|------------|----------|---------|------------|-------------------|---------|------------|-------|---------|
 |||| kuza55 | kuza55 | kuza55 | avolkov1 | avolkov1  | avolkov1 | tf_cnn_benchmarks | tf_cnn_benchmarks | tf_cnn_benchmarks |
@@ -322,6 +327,11 @@ InceptionV3 with images of size 299^2:
 | 7gforce   | 6      | GPU     | error      | N/A  | N/A | 21.33      | 0.52x             | 8.67%   | N/A        |  N/A | N/A   |
 
 Resnet50 with images of size 224^2:
+
+![comparison_resnet50_7gforce_speedup](images/comparison_resnet50_7gforce_speedup.png)
+![comparison_resnet50_az-2x-m60_speedup](images/comparison_resnet50_az-2x-m60_speedup.png)
+![comparison_resnet50_7gforce_efficiency](images/comparison_resnet50_7gforce_efficiency.png)
+![comparison_resnet50_az-2x-m60_efficiency](images/comparison_resnet50_az-2x-m60_efficiency.png)
 
 | machine   | GPUs   | PS      | images/sec | speedup | efficiency | images/sec | speedup | efficiency |
 |-----------|--------|---------|------------|----------|---------|------------|-------------------|---------|
