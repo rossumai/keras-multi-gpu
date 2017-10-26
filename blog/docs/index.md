@@ -46,7 +46,7 @@ In addition there's:
 
 ### Short Conclusion
 
-Currently, multi-GPU training is already possible in Keras. Besides various third-party scripts for making a data-parallel model, there's already [an implementation in the main repo](https://github.com/fchollet/keras/blob/3dd3e8331677e68e7dec6ed4a1cbf16b7ef19f7f/keras/utils/training_utils.py#L56-L75) (to be released in 2.0.9). In our experiments, we can see it is able to provide some speed-up - but not _nearly_ as high as possible (eg. compared to TensorFlow benchmarks).
+Currently, multi-GPU training is already possible in Keras. Besides various third-party scripts for making a data-parallel model, there's already [an implementation in the main repo](https://github.com/fchollet/keras/blob/3dd3e8331677e68e7dec6ed4a1cbf16b7ef19f7f/keras/utils/training_utils.py#L56-L75) (to be released in 2.0.9, its speed is similar to the tested _avolkov1_ and _kuza55_ scripts). In our experiments, this is able to provide _some_ speed-up - but on large tasks where small batch sizes are necessary, the speed-up is minimal (compared to TensorFlow benchmarks) or actually even negative!
 
 ![comparison_resnet50_7gforce_speedup](images/comparison_resnet50_7gforce_speedup.png)
 
