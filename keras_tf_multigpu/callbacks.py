@@ -70,3 +70,37 @@ class SamplesPerSec(Callback):
 
     def print_results(self):
         print('Samples/sec: %0.2f' % np.median(self.all_samples_per_sec))
+
+"""
+Enables CUDA profiling (for usage in nvprof) just for a few batches.
+
+The reasons are:
+
+- profiling outputs are big (easily 100s MB - GBs) and repeating
+- without a proper stop the outputs sometimes fail to save
+
+Since initially the TensorFlow runtime may take time to optimize the graph we
+skip a few epochs and then enable profiling for a few batches within the next
+epoch.
+
+It requires the `cudaprofile` package.
+"""
+class CudaProfile(Callback):
+    import cudaprofile
+
+    def __init__(self, warmup_epochs=0, batches_to_profile=None):
+        self.warmup_epochs = warmup_epochs
+        self.batches_to_profile = batches_to_profile
+        self.enabled = False
+
+    def set_params(self, params):
+        self.params = params
+
+    def on_epoch_begin(self, epoch, logs={}):
+        if epoch == self.warmup_epochs:
+            cudaprofile.start()
+            self.enabled = True
+
+    def on_batch_end(self, batch, logs={}):
+        if self.enabled && batch >= batches_to_profile:
+            cudaprofile.stop()
