@@ -1,0 +1,65 @@
+[P2P (Peer-to-Peer) GPU Bandwidth Latency Test]
+Device: 0, Tesla M60, pciBusID: 0, pciDeviceID: 0, pciDomainID:3403
+Device: 1, Tesla M60, pciBusID: 0, pciDeviceID: 0, pciDomainID:4c42
+Device: 2, Tesla M60, pciBusID: 0, pciDeviceID: 0, pciDomainID:64d0
+Device: 3, Tesla M60, pciBusID: 0, pciDeviceID: 0, pciDomainID:83e7
+Device=0 CANNOT Access Peer Device=1
+Device=0 CANNOT Access Peer Device=2
+Device=0 CANNOT Access Peer Device=3
+Device=1 CANNOT Access Peer Device=0
+Device=1 CANNOT Access Peer Device=2
+Device=1 CANNOT Access Peer Device=3
+Device=2 CANNOT Access Peer Device=0
+Device=2 CANNOT Access Peer Device=1
+Device=2 CANNOT Access Peer Device=3
+Device=3 CANNOT Access Peer Device=0
+Device=3 CANNOT Access Peer Device=1
+Device=3 CANNOT Access Peer Device=2
+
+***NOTE: In case a device doesn't have P2P access to other one, it falls back to normal memcopy procedure.
+So you can see lesser Bandwidth (GB/s) in those cases.
+
+P2P Connectivity Matrix
+     D\D     0     1     2     3
+     0	     1     0     0     0
+     1	     0     1     0     0
+     2	     0     0     1     0
+     3	     0     0     0     1
+Unidirectional P2P=Disabled Bandwidth Matrix (GB/s)
+   D\D     0      1      2      3 
+     0 114.16   5.86   5.28   5.86 
+     1   5.86 114.33   5.86   5.30 
+     2   5.29   5.86 114.12   5.87 
+     3   5.87   5.30   5.87 119.60 
+Unidirectional P2P=Enabled Bandwidth Matrix (GB/s)
+   D\D     0      1      2      3 
+     0 119.85   5.86   5.28   5.86 
+     1   5.87 119.88   5.87   5.28 
+     2   5.28   5.86 119.68   5.86 
+     3   5.88   5.28   5.88 130.35 
+Bidirectional P2P=Disabled Bandwidth Matrix (GB/s)
+   D\D     0      1      2      3 
+     0 135.70  10.40   5.47  10.23 
+     1  10.44 135.34  10.30   5.47 
+     2   5.47  10.50 135.30  10.26 
+     3  10.17   5.47  10.28 135.49 
+Bidirectional P2P=Enabled Bandwidth Matrix (GB/s)
+   D\D     0      1      2      3 
+     0 135.99   9.96   5.54  10.25 
+     1  10.20 135.94  10.19   5.47 
+     2   5.53  10.16 135.47   9.96 
+     3   9.97   5.47   9.89 135.68 
+P2P=Disabled Latency Matrix (us)
+   D\D     0      1      2      3 
+     0   4.60  17.12  17.43  15.99 
+     1  16.88   5.02  18.71  16.43 
+     2  15.59  16.21   5.09  17.86 
+     3  17.17  16.25  16.48   4.50 
+P2P=Enabled Latency Matrix (us)
+   D\D     0      1      2      3 
+     0   4.10  16.08  15.78  16.11 
+     1  16.37   4.23  16.26  16.16 
+     2  15.59  16.20   4.49  17.83 
+     3  16.31  16.40  16.34   4.51 
+
+NOTE: The CUDA Samples are not meant for performance measurements. Results may vary when GPU Boost is enabled.
