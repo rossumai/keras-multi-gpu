@@ -1,0 +1,3 @@
+GPU0    GPU1    CPU Affinity
+GPU0     X     SOC    0-11
+GPU1    SOC     X     0-11
