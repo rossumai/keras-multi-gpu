@@ -23,7 +23,7 @@ class BatchTiming(Callback):
         self.all_batch_times = []
         self.all_epoch_times = []
 
-    def on_epoch_begin(self, batch, logs={}):
+    def on_epoch_begin(self, epoch, logs={}):
         self.epoch_batch_times = []
 
     def on_batch_begin(self, batch, logs={}):
