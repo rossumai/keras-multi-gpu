@@ -10,6 +10,7 @@ setup(name='keras_tf_multigpu',
       packages=['keras_tf_multigpu'],
       zip_safe=False,
       install_requires=[
+         'h5py',
          'Keras>=2.0.8',
          'numpy',
          'tensorflow-gpu>=1.3',
