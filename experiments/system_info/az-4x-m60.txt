@@ -1,0 +1,7 @@
+nvidia-driver: 384.90
+CUDA: 8.0
+cuDNN: 5.1.10, 6.0.21
+Miniconda: 4.3
+Python: 2.7.13
+tensorflow-gpu==1.3.0
+Keras==2.0.8
