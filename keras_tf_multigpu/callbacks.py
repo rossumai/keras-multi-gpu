@@ -5,6 +5,131 @@ import time
 import numpy as np
 from keras.callbacks import Callback
 
+class StagingAreaCallback(Callback):
+    """
+    It allows to prefetch input batches to GPU using TensorFlow StagingArea,
+    making a simple asynchronous pipeline.
+
+    The classic mechanism of copying input data to GPU in Keras with TensorFlow
+    is `feed_dict`: a numpy array is synchronously copied from Python to TF memory
+    and then using a host-to-device memcpy to GPU memory. The computation,
+    however has to wait, which is wasteful.
+
+    This class makes the HtoD memcpy asynchronous using a GPU-resident queue
+    of size two (implemented by StaginArea). The mechanism is as follows:
+
+    - at the beginning of an epoch one batch is `put()` into the queue
+    - during each training step another is is `put()` into the queue and in
+      parallel the batch already present at the GPU is `get()` from the queue
+      at provide as tesnor input to the Keras model (this runs within a single
+      `tf.Session.run()`)
+
+    The input numpy arrays (features and targets) are provided via this
+    callback and sliced into batches inside it. The last batch might be of
+    smaller size without any problem (the StagingArea supports variable-sized
+    batches and allows to enforce constant data sample shape). In the last
+    batch zero-length slice is still put into the queue to keep the get+put
+    operation uniform across all batches.
+
+    Since it's hard to modify Keras to add more data to `feed_dict`, the data
+    from numpy is fed into StagingArea in another `tf.Session.run()` before each
+    training step via an intermediate `tf.Variable` and `feed_dict`. It is still
+    synchronous. A better, though more complicated way would be to use TF queues
+    (depracated) or Dataset API.
+
+    In order to provide extra put() operation to `fetches`, we depend on a fork
+    of Keras (https://github.com/bzamecnik/keras/tree/tf-function-session-run-args).
+    A pull request to upstream will be made soon.
+
+    Example usage:
+
+    ```
+    staging_area_callback = StagingAreaCallback(x_train, y_train, batch_size)
+
+    image = Input(tensor=staging_area_callback.input_tensor)
+    x = Dense(512, activation='relu')(image)
+    digit = Dense(num_classes, activation='softmax')(x)
+    model = Model(inputs=image, outputs=digit)
+
+    model.compile(optimizer='sgd', loss='categorical_crossentropy',
+        target_tensors=[staging_area_callback.target_tensor],
+        fetches=staging_area_callback.extra_ops)
+
+    model.fit(steps_per_epoch=steps_per_epoch, epochs=2,
+        callbacks=[staging_area_callback])
+    ```
+
+    Full example: https://gist.github.com/bzamecnik/b520e2b1e199b193b715477929e39b22
+    """
+    def __init__(self, x, y, batch_size, prefetch_count=1):
+        self.x = x
+        self.y = y
+        self.batch_size = batch_size
+        self.prefetch_count = prefetch_count
+
+        features_shape = (None,) + x.shape[1:]
+        labels_shape = (None,) + y.shape[1:]
+
+        with tf.device('/cpu:0'):
+            # for feeding inputs to the the StagingArea
+            # Let's try to decouple feeding data to StagingArea.put()
+            # from the training batch session.run()
+            # https://www.tensorflow.org/api_guides/python/reading_data#Preloaded_data
+            self.features_batch_next_value = tf.placeholder(dtype=x.dtype, shape=features_shape)
+            # - prevent the variable to be used as a model parameter: trainable=False, collections=[]
+            # - allow dynamic variable shape (for the last batch): validate_shape=False
+            features_batch_next = tf.Variable(self.features_batch_next_value, trainable=False, collections=[], validate_shape=False)
+            self.labels_batch_next_value = tf.placeholder(dtype=y.dtype, shape=labels_shape)
+            labels_batch_next = tf.Variable(self.labels_batch_next_value, trainable=False, collections=[], validate_shape=False)
+        self.assign_next_batch = tf.group(features_batch_next.initializer, labels_batch_next.initializer)
+
+        # will be used for prefetching to GPU
+        area = tf.contrib.staging.StagingArea(
+            dtypes=[x.dtype, y.dtype],
+            shapes=[features_shape, labels_shape])
+
+        self.area_put = area.put([features_batch_next.value(), labels_batch_next.value()])
+        area_get_features, area_get_labels = area.get()
+        self.area_size = area.size()
+        self.area_clear = area.clear()
+
+        self.input_tensor = area_get_features
+        self.target_tensor = area_get_labels
+        self.extra_ops = [self.area_put]
+
+    def set_params(self, params):
+        super().set_params(params)
+        self.steps_per_epoch = self.params['steps']
+
+    def _slice_batch(self, i):
+        start = i * self.batch_size
+        end = start + self.batch_size
+        return (self.x[start:end], self.y[start:end])
+
+    def _assign_batch(self, session, data):
+        x_batch, y_batch = data
+        session.run(self.assign_next_batch, feed_dict={
+            self.features_batch_next_value: x_batch,
+            self.labels_batch_next_value: y_batch})
+
+    def on_epoch_begin(self, epoch, logs=None):
+        sess = K.get_session()
+        for i in range(self.prefetch_count):
+            self._assign_batch(sess, self._slice_batch(i))
+            sess.run(self.area_put)
+
+    def on_batch_begin(self, batch, logs=None):
+        sess = K.get_session()
+        # Slice for `prefetch_count` last batches is empty.
+        # It serves as a dummy value which is put into StagingArea
+        # but never read.
+        data = self._slice_batch(batch + self.prefetch_count)
+        self._assign_batch(sess, data)
+
+    def on_epoch_end(self, epoch, logs=None):
+        sess = K.get_session()
+        sess.run(self.area_clear)
+
 class BatchTiming(Callback):
     """
     It measure robust stats for timing of batches and epochs.
@@ -86,7 +211,6 @@ epoch.
 It requires the `cudaprofile` package.
 """
 class CudaProfile(Callback):
-    import cudaprofile
 
     def __init__(self, warmup_epochs=0, batches_to_profile=None):
         self.warmup_epochs = warmup_epochs
@@ -97,10 +221,12 @@ class CudaProfile(Callback):
         self.params = params
 
     def on_epoch_begin(self, epoch, logs={}):
+        import cudaprofile
         if epoch == self.warmup_epochs:
             cudaprofile.start()
             self.enabled = True
 
     def on_batch_end(self, batch, logs={}):
-        if self.enabled && batch >= batches_to_profile:
+        import cudaprofile
+        if self.enabled and batch >= batches_to_profile:
             cudaprofile.stop()
