@@ -6,7 +6,7 @@
 import math
 
 from keras.datasets import mnist
-from keras.layers import Dense, Input
+from keras.layers import Dense, Input, Conv2D, MaxPooling2D, Dropout, Flatten
 from keras.models import Model
 from keras.utils import to_categorical
 import numpy as np

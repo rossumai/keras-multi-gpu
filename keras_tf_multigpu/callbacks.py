@@ -4,6 +4,8 @@ import time
 
 import numpy as np
 from keras.callbacks import Callback
+import keras.backend as K
+import tensorflow as tf
 
 class StagingAreaCallback(Callback):
     """
