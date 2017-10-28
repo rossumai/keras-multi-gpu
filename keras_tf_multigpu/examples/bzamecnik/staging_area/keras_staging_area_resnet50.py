@@ -21,10 +21,12 @@ def make_plain_model(num_classes):
     model.compile(optimizer='sgd', loss='categorical_crossentropy')
     return model
 
-def make_tensor_model(features_tensor, targets_tensor, extra_ops, num_classes):
-    model = ResNet50(input_tensor=features_tensor, classes=num_classes, weights=None)
+def make_tensor_model(staging_area_callback, num_classes):
+    model = ResNet50(input_tensor=staging_area_callback.input_tensor,
+        classes=num_classes, weights=None)
     model.compile(optimizer='sgd', loss='categorical_crossentropy',
-        target_tensors=[targets_tensor], fetches=extra_ops)
+        target_tensors=[staging_area_callback.target_tensor],
+        fetches=staging_area_callback.extra_ops)
     return model
 
 num_classes = 1000
@@ -43,7 +45,7 @@ gauge = SamplesPerSec(batch_size)
 staging_area_callback = StagingAreaCallback(x_train, y_train, batch_size)
 
 print('training plain model:')
-plain_model = make_plain_model(x_train.shape[1:], num_classes)
+plain_model = make_plain_model(num_classes)
 plain_model.fit(x_train, y_train, batch_size, epochs=epochs, callbacks=[gauge])
 
 print('training pipelined model:')
