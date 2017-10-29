@@ -5,7 +5,6 @@
 
 import math
 
-from keras.datasets import mnist
 from keras.layers import Dense, Input, Conv2D, MaxPooling2D, Dropout, Flatten
 from keras.models import Model
 from keras.utils import to_categorical
@@ -15,7 +14,7 @@ from keras_tf_multigpu.callbacks import StagingAreaCallback, SamplesPerSec
 from keras_tf_multigpu.examples.datasets import create_synth_cifar10
 
 
-def make_convnet(input):
+def make_convnet(input, num_classes):
     x = Conv2D(32, (3, 3), padding='same', activation='relu')(input)
     x = Conv2D(32, (3, 3), activation='relu')(x)
     x = MaxPooling2D(pool_size=(2, 2))(x)
@@ -35,13 +34,13 @@ def make_convnet(input):
 
 def make_plain_model(input_shape, num_classes):
     input = Input(shape=input_shape)
-    model = Model(inputs=input, outputs=make_convnet(input))
+    model = Model(inputs=input, outputs=make_convnet(input, num_classes))
     model.compile(optimizer='sgd', loss='categorical_crossentropy')
     return model
 
 def make_tensor_model(staging_area_callback, num_classes):
     input = Input(tensor=staging_area_callback.input_tensor)
-    model = Model(inputs=input, outputs=make_convnet(input))
+    model = Model(inputs=input, outputs=make_convnet(input, num_classes))
     model.compile(optimizer='sgd', loss='categorical_crossentropy',
         target_tensors=[staging_area_callback.target_tensor],
         fetches=staging_area_callback.extra_ops)
