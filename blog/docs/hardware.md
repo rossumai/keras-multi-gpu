@@ -174,10 +174,11 @@ Wed Oct  4 15:08:10 2017
 
 ### Others
 
-Not used in our tests.
-
 - `az-4x-m60` - Azure Standard_NV24 (4x Tesla M60)
+    - used later for a few measurements
 - HW with NVLink (such as NVIDIA DGX-1) would be much better, but we don't have access to any, thus we can't measure.
+    - Not used in our tests.
+    - UPDATE: Since 2017-10-25 [AWS P3 with 8xP100 and NVlink](https://aws.amazon.com/blogs/aws/new-amazon-ec2-instances-with-up-to-8-nvidia-tesla-v100-gpus-p3/) is available.
 
 ## Topology
 

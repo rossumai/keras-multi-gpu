@@ -167,12 +167,18 @@ PS=CPU, data format = NCHW.
 |-----------|------|------------|------------|---------|------------|
 | az-2x-m60 | 1    | inception3 | 47.49      | 1.00x   | 100.00%    |
 | az-2x-m60 | 2    | inception3 | 95.43      | 2.01x   | 100.47%    |
+| az-4x-m60 | 1    | inception3 | 44.92      | 1.00x   | 100.00%    |
+| az-4x-m60 | 2    | inception3 | 91.44      | 2.036x  | 101.78%    |
+| az-4x-m60 | 3    | inception3 | 127.33     | 2.835x  | 96.56%     |
+| az-4x-m60 | 4    | inception3 | 173.5      | 3.862x  | 100.47%    |
 | 7gforce   | 1    | inception3 | 78.44      | 1.00x   | 100.00%    |
 | 7gforce   | 2    | inception3 | 118.32     | 1.51x   | 75.42%     |
 | 7gforce   | 4    | inception3 | 236.86     | 3.02x   | 75.49%     |
 | 7gforce   | 6    | inception3 | 351.98     | 4.49x   | 74.79%     |
 
-![tf_cnn_benchmark_inception3_speedup](images/tf_cnn_benchmark_inception3_speedup.png)
+![inception3_tf_cnn_benchmarks_speedup](images/inception3_tf_cnn_benchmarks_speedup.png)
+![inception3_tf_cnn_benchmarks_efficiency](images/inception3_tf_cnn_benchmarks_efficiency.png)
+![tf_cnn_benchmark_inception3_speedup](images/inception3_tf_cnn_benchmarks_efficiency.png)
 ![tf_cnn_benchmark_inception3_efficiency](images/tf_cnn_benchmark_inception3_efficiency.png)
 
 #### ResNet50
@@ -299,6 +305,21 @@ On 7gforce using GPUs we can get to 4x speedup at 67.16% efficiency. That's real
 
 In contrast tf_cnn_benchmarks achieve almost perfect scaling even on batch size 128. On 7gforce we observed speed up 1.841x on 2 GPUs and 3.510x on 6 GPUs.
 
+#### Results on az-4x-m60
+
+tf_cnn_benchmarks with resnet60 vs. Keras + avolkov1 + smaller convnet, batch size 512.
+
+| method            | GPUs | images/sec | speedup | efficiency |
+|-------------------|------|------------|---------|------------|
+| tf_cnn_benchmarks | 1    | 1368.59    | 1.000x  | 100.00%    |
+| tf_cnn_benchmarks | 4    | 4848.19    | 3.542x  | 88.56%     |
+| keras_avolkov1    | 1    | 7690.17    | 1.000x  | 100.00%    |
+| keras_avolkov1    | 2    | 13774.93   | 1.791x  | 89.56%     |
+| keras_avolkov1    | 3    | 18961.32   | 2.466x  | 82.19%     |
+| keras_avolkov1    | 4    | 23365.11   | 3.038x  | 75.96%     |
+
+In this case Keras got a decent scaling, even compared to tf_cnn_benchmarks.
+
 ### @avolkov1 and @kuza55 on InceptionV3/Resnet50 and synthetic ImageNet
 
 In order to compare with `tf_cnn_benchmarks` on more realistic models/datasets, let's adapt @avolkov1 and @kuza55 code to InceptionV3/Resnet50 models on  synthetic ImageNet dataset.
@@ -318,6 +339,13 @@ InceptionV3 with images of size 299^2:
 | az-2x-m60 | 1      | GPU     | 31.71      | 1.00x    | 100.00% | 31.67      | 1.00x             | 100.00% | 47.49      | 1.00x | 100.00% |
 | az-2x-m60 | 2      | CPU     | 53.35      | 1.68x    | 84.12%  | 54.58      | 1.72x             | 86.17%  | 95.43      | 2.01x | 100.47% |
 | az-2x-m60 | 2      | GPU     | 53.33      | 1.68x    | 84.09%  | 53.20      | 1.68x             | 83.99%  | 94.72      | 1.99x | 99.73%  |
+| az-4x-m60 | 1      | GPU     | -          | -        | -       | 29.36      | 1.000x| 100.00% | 44.92 | 1.000x | 100.00% |
+| az-4x-m60 | 2      | CPU     | -          | -        | -       | 53.16      | 1.811x| 90.55%  | 91.44 | 2.036	| 101.78% |
+| az-4x-m60 | 2      | GPU     | -          | -        | -       | 50.52	    | 1.721x| 86.05%  |
+| az-4x-m60 | 3      | CPU     | -          | -        | -       | 64.17      | 2.186x| 72.87%  | 127.33 | 2.835 |	94.49% |
+| az-4x-m60 | 3      | GPU     | -          | -        | -       | 60.33      | 2.055x| 68.51%  |
+| az-4x-m60 | 4      | CPU     | -          | -        | -       | 75.51      | 2.572x| 64.31%  | 173.5 | 3.862	| 96.56% |
+| az-4x-m60 | 4      | GPU     | -          | -        | -       | 64.67      | 2.203x| 55.08%  |
 | 7gforce   | 1      | GPU     | 39.07      | 1.00x    | 100.00% | 41         | 1.00x             | 100.00% | 78.44      | 1.00x | 100.00% |
 | 7gforce   | 2      | CPU     | 49.01      | 1.25x    | 62.72%  | 50.1       | 1.22x             | 61.10%  | 118.32     | 1.51x | 75.42%  |
 | 7gforce   | 4      | CPU     | 60.38      | 1.55x    | 38.64%  | 64.05      | 1.56x             | 39.05%  | 236.86     | 3.02x | 75.49%  |
@@ -342,10 +370,10 @@ Resnet50 with images of size 224^2:
 | 7gforce   | 1      | GPU     | 54.52      | 1.00x    | 100.00% | 58.19      | 1.00x | 100.00% |
 | 7gforce   | 2      | CPU     | 55.09      | 1.01x    | 50.52%  | 56.02      | 0.96x | 48.14%  |
 | 7gforce   | 4      | CPU     | 66.55      | 1.22x    | 30.52%  | 67.33      | 1.16x | 28.93%  |
-| 7gforce   | 6      | CPU     | error      | N/A  | N/A | 68.21      | 1.17x | 19.54%  |
+| 7gforce   | 6      | CPU     | error      | N/A      | N/A     | 68.21      | 1.17x | 19.54%  |
 | 7gforce   | 2      | GPU     | 67.34      | 1.24x    | 61.76%  | 66.9       | 1.15x | 57.48%  |
 | 7gforce   | 4      | GPU     | 33.29      | 0.61x    | 15.27%  | 33.43      | 0.57x | 14.36%  |
-| 7gforce   | 6      | GPU     | error      | N/A  | N/A | 21.56      | 0.37x | 6.18%   |
+| 7gforce   | 6      | GPU     | error      | N/A      | N/A     | 21.56      | 0.37x | 6.18%   |
 
 Observations:
 
@@ -397,3 +425,8 @@ GTX 1070 has 93.75% of cores and 160% of internal memory bandwidth compared to T
 ### @fcholet's new multi_gpu_model
 
 From the code inspection and first measurement it seems the performance is the same as for @kuza55 and @avolkov1. We need to make exact measurements.
+
+### Overall Comparison
+
+![overall_comparison_inception3_7gforce_speedup](images/overall_comparison_inception3_7gforce_speedup.png)
+![overall_comparison_inception3_7gforce_efficiency](images/overall_comparison_inception3_7gforce_efficiency.png)
