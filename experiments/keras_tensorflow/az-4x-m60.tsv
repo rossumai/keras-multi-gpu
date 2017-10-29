@@ -1,0 +1,5 @@
+machine	note	CUDA_VISIBLE_DEVICES	num_gpus	model		local_parameter_device	variable_update	use_nccl	data_format	local batch size	total images/sec	ideal speed-up	speed up vs 1 GPU	efficiency
+az-4x-m60	M60	0	1	inception3		gpu	parameter_server	FALSE	NCHW	32	44.92		1.000x	100.00%
+az-4x-m60	M60	0,1	2	inception3		cpu	parameter_server	FALSE	NCHW	32	91.44		2.036x	101.78%
+az-4x-m60	M60	0,1,2	3	inception3		cpu	parameter_server	FALSE	NCHW	32	127.33		2.835x	94.49%
+az-4x-m60	M60	0,1,2,3	4	inception3		cpu	parameter_server	FALSE	NCHW	32	173.5		3.862x	96.56%

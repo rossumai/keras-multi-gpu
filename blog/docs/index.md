@@ -48,9 +48,10 @@ In addition there's:
 
 Currently, multi-GPU training is already possible in Keras. Besides various third-party scripts for making a data-parallel model, there's already [an implementation in the main repo](https://github.com/fchollet/keras/blob/3dd3e8331677e68e7dec6ed4a1cbf16b7ef19f7f/keras/utils/training_utils.py#L56-L75) (to be released in 2.0.9). In our experiments, we can see it is able to provide some speed-up - but not _nearly_ as high as possible (eg. compared to TensorFlow benchmarks).
 
-![comparison_resnet50_7gforce_speedup](images/comparison_inception3_7gforce_ps_cpu_speedup.png)
+In particular efficiency for Keras goes down, whereas for TensorFlow benchmarks it stays roughly constant. Also for machine with low bandwidth (such as our 7gforce) TensorFlow benchmarks still scale, albeit slower, but Keras doesn’t scale well. Cloud instances, such as Azure NV24 with 4x Tesla M60, seem to allow for good scaling.
 
-![keras avolkov1 cifar10 7gforce speedup](images/keras_avolkov1_cifar10_7gforce_speedup.png)
+![overall_comparison_inception3_7gforce_speedup](images/overall_comparison_inception3_7gforce_speedup.png)
+![overall_comparison_inception3_7gforce_efficiency](images/overall_comparison_inception3_7gforce_efficiency.png)
 
 Also, there are some recently released third-party packages like [horovod](https://github.com/uber/horovod) or [tensorpack](https://github.com/tensorpack) that support data-parallel training with TensorFlow and Keras. Both claim good speed-up (so far we weren't able to measure them), but the cost is a more complicated API and setup (e.g. a dependency on MPI).
 
@@ -60,4 +61,14 @@ From measuring TensorFlow benchmarks ([tf_cnn_benchmarks](https://github.com/ten
 
 Ideally, we'd like to get a good speed-up with a simple Keras-style API and without relying on external libraries other than Keras and TensorFlow themselves. In particular, we need to correcly implement pipelining (at least double-buffering) of batches on the GPU using StagingArea, and if necessary also providing data to TF memory asynchronously (using TF queues or the Dataset API). We found the best way to benchmark improvements is the nvprof tool.
 
-Along with this article, [we provided some code](https://github.com/rossumai/keras-multi-gpu) to help with making benchmarks of multi-GPU training with Keras.  At the moment, we are working further to [help Keras-level multi-GPU training speedups become a reality](https://github.com/avolkov1/keras_experiments/issues/2#issuecomment-339507791).
+Along with this article, [we provided some code](https://github.com/rossumai/keras-multi-gpu) to help with making benchmarks of multi-GPU training with Keras. At the moment, we are working further to help Keras-level multi-GPU training speedups become a reality. So far [we managed to implement GPU prefetching in Keras using StagingArea](https://github.com/rossumai/keras-multi-gpu/tree/master/keras_tf_multigpu/examples/bzamecnik/staging_area) (+ [discussion](https://github.com/avolkov1/keras_experiments/issues/2), related [PR #8286](https://github.com/fchollet/keras/pull/8286)).
+
+Without pre-fetching at GPU:
+
+![nvprof_sync_htod_memcpy](images/nvprof_sync_htod_memcpy.png)
+
+With pre-fetching at GPU (gap between batches is shorter):
+
+![nvprof_async_htod_memcpy_with_stagingarea](images/nvprof_async_htod_memcpy_with_stagingarea.png)
+
+Using StagingArea at GPU we observed some speedup in data feeding even on a single GPU. Let’s see if integration with multi-GPU data-parallel models will help Keras scale better. Stay tuned.
