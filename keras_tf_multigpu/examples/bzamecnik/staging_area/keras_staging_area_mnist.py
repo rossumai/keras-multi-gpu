@@ -19,19 +19,19 @@ def make_plain_model(input_shape, num_classes):
     x = Dense(512, activation='relu')(image)
     digit = Dense(num_classes, activation='softmax')(x)
     model = Model(inputs=image, outputs=digit)
-
     model.compile(optimizer='sgd', loss='categorical_crossentropy')
+    return model
 
 def make_tensor_model(staging_area_callback, num_classes):
     image = Input(tensor=staging_area_callback.input_tensor)
     x = Dense(512, activation='relu')(image)
     digit = Dense(num_classes, activation='softmax')(x)
     model = Model(inputs=image, outputs=digit)
-
     model.compile(optimizer='sgd', loss='categorical_crossentropy',
         target_tensors=[staging_area_callback.target_tensor],
         feed_dict=staging_area_callback.feed_dict,
         fetches=staging_area_callback.extra_ops)
+    return model
 
 num_classes = 10
 batch_size = 64 # makes the last batch of size 32
