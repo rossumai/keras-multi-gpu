@@ -7,7 +7,134 @@ from keras.callbacks import Callback
 import keras.backend as K
 import tensorflow as tf
 
+# NOTE: So far we observed asynchronous feeding for StagingAreaCallback.
+# There's a simpligied implementation StagingAreaCallbackFeedDict which uses
+# feed_dict instead of intermediate tf.Variable, but it's still synchronous.
+
 class StagingAreaCallback(Callback):
+    """
+    It allows to prefetch input batches to GPU using TensorFlow StagingArea,
+    making a simple asynchronous pipeline.
+
+    The classic mechanism of copying input data to GPU in Keras with TensorFlow
+    is `feed_dict`: a numpy array is synchronously copied from Python to TF memory
+    and then using a host-to-device memcpy to GPU memory. The computation,
+    however has to wait, which is wasteful.
+
+    This class makes the HtoD memcpy asynchronous using a GPU-resident queue
+    of size two (implemented by StaginArea). The mechanism is as follows:
+
+    - at the beginning of an epoch one batch is `put()` into the queue
+    - during each training step another is is `put()` into the queue and in
+      parallel the batch already present at the GPU is `get()` from the queue
+      at provide as tesnor input to the Keras model (this runs within a single
+      `tf.Session.run()`)
+
+    The input numpy arrays (features and targets) are provided via this
+    callback and sliced into batches inside it. The last batch might be of
+    smaller size without any problem (the StagingArea supports variable-sized
+    batches and allows to enforce constant data sample shape). In the last
+    batch zero-length slice is still put into the queue to keep the get+put
+    operation uniform across all batches.
+
+    We feed input data to StagingArea via `feed_dict` as an additional input
+    besides Keras inputs. Note that the `feed_dict` dictionary is passed as a
+    reference and its values are updated inside the callback. It is still
+    synchronous. A better, though more complicated way would be to use TF queues
+    (depracated) or Dataset API.
+
+    It seems to help on GPUs with low host-device bandwidth, such as desktop
+    machines with many GPUs sharing a limited number of PCIe channels.
+
+    In order to provide extra put() operation to `fetches`, we depend on a fork
+    of Keras (https://github.com/bzamecnik/keras/tree/tf-function-session-run-args).
+    A pull request to upstream will be made soon.
+
+    Example usage:
+
+    ```
+    staging_area_callback = StagingAreaCallback(x_train, y_train, batch_size)
+
+    image = Input(tensor=staging_area_callback.input_tensor)
+    x = Dense(512, activation='relu')(image)
+    digit = Dense(num_classes, activation='softmax')(x)
+    model = Model(inputs=image, outputs=digit)
+
+    model.compile(optimizer='sgd', loss='categorical_crossentropy',
+        target_tensors=[staging_area_callback.target_tensor],
+        feed_dict=staging_area_callback.feed_dict,
+        fetches=staging_area_callback.extra_ops)
+
+    model.fit(steps_per_epoch=steps_per_epoch, epochs=2,
+        callbacks=[staging_area_callback])
+    ```
+
+    Full example: https://gist.github.com/bzamecnik/b520e2b1e199b193b715477929e39b22
+    """
+    def __init__(self, x, y, batch_size, prefetch_count=1):
+        self.x = x
+        self.y = y
+        self.batch_size = batch_size
+        self.prefetch_count = prefetch_count
+
+        features_shape = (None,) + x.shape[1:]
+        labels_shape = (None,) + y.shape[1:]
+
+        # inputs for feeding inputs to the the StagingArea
+        self.features_batch_next = tf.placeholder(dtype=x.dtype, shape=features_shape)
+        self.labels_batch_next = tf.placeholder(dtype=y.dtype, shape=labels_shape)
+        # We'll assign self.features_batch_next, self.labels_batch_next before
+        # each StagingArea.put() - feed_dict is passed by reference and updated
+        # from outside.
+        self.feed_dict = {}
+
+        # will be used for prefetching to GPU
+        area = tf.contrib.staging.StagingArea(
+            dtypes=[x.dtype, y.dtype],
+            shapes=[features_shape, labels_shape])
+
+        self.area_put = area.put([self.features_batch_next, self.labels_batch_next])
+        area_get_features, area_get_labels = area.get()
+        self.area_size = area.size()
+        self.area_clear = area.clear()
+
+        self.input_tensor = area_get_features
+        self.target_tensor = area_get_labels
+        self.extra_ops = [self.area_put]
+
+    def set_params(self, params):
+        super().set_params(params)
+        self.steps_per_epoch = self.params['steps']
+
+    def _slice_batch(self, i):
+        start = i * self.batch_size
+        end = start + self.batch_size
+        return (self.x[start:end], self.y[start:end])
+
+    def _update_feed_dict(self, data):
+        x_batch, y_batch = data
+        self.feed_dict[self.features_batch_next] = x_batch
+        self.feed_dict[self.labels_batch_next] = y_batch
+
+    def on_epoch_begin(self, epoch, logs=None):
+        sess = K.get_session()
+        # initially fill the StagingArea
+        for i in range(self.prefetch_count):
+            self._update_feed_dict(self._slice_batch(i))
+            sess.run(feed_dict=self.feed_dict, fetches=[self.area_put])
+
+    def on_batch_begin(self, batch, logs=None):
+        sess = K.get_session()
+        # Slice for `prefetch_count` last batches is empty.
+        # It serves as a dummy value which is put into StagingArea
+        # but never read.
+        self._update_feed_dict(self._slice_batch(batch + self.prefetch_count))
+
+    def on_epoch_end(self, epoch, logs=None):
+        sess = K.get_session()
+        sess.run(self.area_clear)
+
+class StagingAreaCallbackFeedDict(Callback):
     """
     It allows to prefetch input batches to GPU using TensorFlow StagingArea,
     making a simple asynchronous pipeline.
