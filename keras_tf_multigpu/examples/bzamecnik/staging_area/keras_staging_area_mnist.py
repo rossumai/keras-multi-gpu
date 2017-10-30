@@ -12,6 +12,8 @@ import numpy as np
 
 from keras_tf_multigpu.callbacks import StagingAreaCallback, SamplesPerSec
 
+np.random.seed(42)
+
 num_classes = 10
 
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -34,6 +36,7 @@ model = Model(inputs=image, outputs=digit)
 
 model.compile(optimizer='sgd', loss='categorical_crossentropy',
     target_tensors=[staging_area_callback.target_tensor],
+    feed_dict=staging_area_callback.feed_dict,
     fetches=staging_area_callback.extra_ops)
 
 model.fit(steps_per_epoch=steps_per_epoch, epochs=2,

@@ -33,11 +33,14 @@ class StagingAreaCallback(Callback):
     batch zero-length slice is still put into the queue to keep the get+put
     operation uniform across all batches.
 
-    Since it's hard to modify Keras to add more data to `feed_dict`, the data
-    from numpy is fed into StagingArea in another `tf.Session.run()` before each
-    training step via an intermediate `tf.Variable` and `feed_dict`. It is still
+    We feed input data to StagingArea via `feed_dict` as an additional input
+    besides Keras inputs. Note that the `feed_dict` dictionary is passed as a
+    reference and its values are updated inside the callback. It is still
     synchronous. A better, though more complicated way would be to use TF queues
     (depracated) or Dataset API.
+
+    It seems to help on GPUs with low host-device bandwidth, such as desktop
+    machines with many GPUs sharing a limited number of PCIe channels.
 
     In order to provide extra put() operation to `fetches`, we depend on a fork
     of Keras (https://github.com/bzamecnik/keras/tree/tf-function-session-run-args).
@@ -55,6 +58,7 @@ class StagingAreaCallback(Callback):
 
     model.compile(optimizer='sgd', loss='categorical_crossentropy',
         target_tensors=[staging_area_callback.target_tensor],
+        feed_dict=staging_area_callback.feed_dict,
         fetches=staging_area_callback.extra_ops)
 
     model.fit(steps_per_epoch=steps_per_epoch, epochs=2,
@@ -72,25 +76,20 @@ class StagingAreaCallback(Callback):
         features_shape = (None,) + x.shape[1:]
         labels_shape = (None,) + y.shape[1:]
 
-        with tf.device('/cpu:0'):
-            # for feeding inputs to the the StagingArea
-            # Let's try to decouple feeding data to StagingArea.put()
-            # from the training batch session.run()
-            # https://www.tensorflow.org/api_guides/python/reading_data#Preloaded_data
-            self.features_batch_next_value = tf.placeholder(dtype=x.dtype, shape=features_shape)
-            # - prevent the variable to be used as a model parameter: trainable=False, collections=[]
-            # - allow dynamic variable shape (for the last batch): validate_shape=False
-            features_batch_next = tf.Variable(self.features_batch_next_value, trainable=False, collections=[], validate_shape=False)
-            self.labels_batch_next_value = tf.placeholder(dtype=y.dtype, shape=labels_shape)
-            labels_batch_next = tf.Variable(self.labels_batch_next_value, trainable=False, collections=[], validate_shape=False)
-        self.assign_next_batch = tf.group(features_batch_next.initializer, labels_batch_next.initializer)
+        # inputs for feeding inputs to the the StagingArea
+        self.features_batch_next = tf.placeholder(dtype=x.dtype, shape=features_shape)
+        self.labels_batch_next = tf.placeholder(dtype=y.dtype, shape=labels_shape)
+        # We'll assign self.features_batch_next, self.labels_batch_next before
+        # each StagingArea.put() - feed_dict is passed by reference and updated
+        # from outside.
+        self.feed_dict = {}
 
         # will be used for prefetching to GPU
         area = tf.contrib.staging.StagingArea(
             dtypes=[x.dtype, y.dtype],
             shapes=[features_shape, labels_shape])
 
-        self.area_put = area.put([features_batch_next.value(), labels_batch_next.value()])
+        self.area_put = area.put([self.features_batch_next, self.labels_batch_next])
         area_get_features, area_get_labels = area.get()
         self.area_size = area.size()
         self.area_clear = area.clear()
@@ -108,25 +107,24 @@ class StagingAreaCallback(Callback):
         end = start + self.batch_size
         return (self.x[start:end], self.y[start:end])
 
-    def _assign_batch(self, session, data):
+    def _update_feed_dict(self, data):
         x_batch, y_batch = data
-        session.run(self.assign_next_batch, feed_dict={
-            self.features_batch_next_value: x_batch,
-            self.labels_batch_next_value: y_batch})
+        self.feed_dict[self.features_batch_next] = x_batch
+        self.feed_dict[self.labels_batch_next] = y_batch
 
     def on_epoch_begin(self, epoch, logs=None):
         sess = K.get_session()
+        # initially fill the StagingArea
         for i in range(self.prefetch_count):
-            self._assign_batch(sess, self._slice_batch(i))
-            sess.run(self.area_put)
+            self._update_feed_dict(self._slice_batch(i))
+            sess.run(feed_dict=self.feed_dict, fetches=[self.area_put])
 
     def on_batch_begin(self, batch, logs=None):
         sess = K.get_session()
         # Slice for `prefetch_count` last batches is empty.
         # It serves as a dummy value which is put into StagingArea
         # but never read.
-        data = self._slice_batch(batch + self.prefetch_count)
-        self._assign_batch(sess, data)
+        self._update_feed_dict(self._slice_batch(batch + self.prefetch_count))
 
     def on_epoch_end(self, epoch, logs=None):
         sess = K.get_session()

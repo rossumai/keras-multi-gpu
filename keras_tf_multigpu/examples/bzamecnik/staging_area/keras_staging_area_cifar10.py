@@ -13,6 +13,7 @@ import numpy as np
 from keras_tf_multigpu.callbacks import StagingAreaCallback, SamplesPerSec
 from keras_tf_multigpu.examples.datasets import create_synth_cifar10
 
+np.random.seed(42)
 
 def make_convnet(input, num_classes):
     x = Conv2D(32, (3, 3), padding='same', activation='relu')(input)
@@ -43,6 +44,7 @@ def make_tensor_model(staging_area_callback, num_classes):
     model = Model(inputs=input, outputs=make_convnet(input, num_classes))
     model.compile(optimizer='sgd', loss='categorical_crossentropy',
         target_tensors=[staging_area_callback.target_tensor],
+        feed_dict=staging_area_callback.feed_dict,
         fetches=staging_area_callback.extra_ops)
     return model
 
@@ -63,8 +65,8 @@ gauge = SamplesPerSec(batch_size)
 staging_area_callback = StagingAreaCallback(x_train, y_train, batch_size)
 
 print('training plain model:')
-plain_model = make_plain_model(x_train.shape[1:], num_classes)
-plain_model.fit(x_train, y_train, batch_size, epochs=epochs, callbacks=[gauge])
+# plain_model = make_plain_model(x_train.shape[1:], num_classes)
+# plain_model.fit(x_train, y_train, batch_size, epochs=epochs, callbacks=[gauge])
 
 print('training pipelined model:')
 pipelined_model = make_tensor_model(staging_area_callback, num_classes)
