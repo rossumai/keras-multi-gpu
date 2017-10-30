@@ -47,8 +47,8 @@ gauge = SamplesPerSec(batch_size)
 staging_area_callback = StagingAreaCallback(x_train, y_train, batch_size)
 
 print('training plain model:')
-# plain_model = make_plain_model(num_classes)
-# plain_model.fit(x_train, y_train, batch_size, epochs=epochs, callbacks=[gauge])
+plain_model = make_plain_model(num_classes)
+plain_model.fit(x_train, y_train, batch_size, epochs=epochs, callbacks=[gauge])
 
 print('training pipelined model:')
 pipelined_model = make_tensor_model(staging_area_callback, num_classes)

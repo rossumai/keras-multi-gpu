@@ -54,7 +54,6 @@ batch_size = 2048
 epochs = 5
 
 x_train, y_train = create_synth_cifar10(dataset_size)
-
 x_train = x_train.astype('float32')
 y_train = y_train.astype('float32')
 
@@ -65,8 +64,8 @@ gauge = SamplesPerSec(batch_size)
 staging_area_callback = StagingAreaCallback(x_train, y_train, batch_size)
 
 print('training plain model:')
-# plain_model = make_plain_model(x_train.shape[1:], num_classes)
-# plain_model.fit(x_train, y_train, batch_size, epochs=epochs, callbacks=[gauge])
+plain_model = make_plain_model(x_train.shape[1:], num_classes)
+plain_model.fit(x_train, y_train, batch_size, epochs=epochs, callbacks=[gauge])
 
 print('training pipelined model:')
 pipelined_model = make_tensor_model(staging_area_callback, num_classes)
