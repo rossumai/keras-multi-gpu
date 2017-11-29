@@ -12,7 +12,7 @@ from keras.models import Model
 from keras.utils import to_categorical
 import numpy as np
 
-from keras_tf_multigpu.callbacks import StagingAreaCallback, SamplesPerSec
+from keras_tf_multigpu.callbacks import StagingAreaCallbackFeedDict, SamplesPerSec
 from keras_tf_multigpu.examples.datasets import create_synth_imagenet
 
 np.random.seed(42)
@@ -27,6 +27,7 @@ def make_tensor_model(staging_area_callback, num_classes):
         classes=num_classes, weights=None)
     model.compile(optimizer='sgd', loss='categorical_crossentropy',
         target_tensors=[staging_area_callback.target_tensor],
+        feed_dict=staging_area_callback.feed_dict,
         fetches=staging_area_callback.extra_ops)
     return model
 

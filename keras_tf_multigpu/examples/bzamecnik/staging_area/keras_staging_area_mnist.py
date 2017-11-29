@@ -12,6 +12,8 @@ import numpy as np
 
 from keras_tf_multigpu.callbacks import StagingAreaCallback, SamplesPerSec
 
+np.random.seed(42)
+
 num_classes = 10
 
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
